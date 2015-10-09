@@ -1,0 +1,111 @@
+<!-- Copyright 2015, Google, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. -->
+<div flex layout="row" class="layout-row">
+  <md-content flex="30" layout-padding>
+    <md-content class="layout-column md-whiteframe-z1" layout="column">
+      <md-toolbar class="demo-toolbar md-primary md-default-theme">
+        <div class="md-toolbar-tools">
+          <h3>Repositories</h3>
+          <span flex="" class="flex"></span>
+        </div>
+      </md-toolbar>
+      <div layout="row" layout-sm="column" layout-align="space-around" ng-if="Ctrl.loading">
+        <md-progress-circular md-mode="indeterminate"></md-progress-circular>
+      </div>
+      <md-content layout-padding ng-hide="Ctrl.loading">
+        <md-list id="repo-list" ng-show="Ctrl.entity.repos.length" class="layout-column" layout="column" md-scroll-y>
+          <md-list-item class="md-1-line" ng-repeat="_repo in Ctrl.entity.repos track by _repo.id" ng-click="Ctrl.viewRepo(_repo)" ng-class="{active: Ctrl.repo === _repo}" aria-label="{_repo.name}">
+            <div class="md-list-item-text" layout="column">
+              <h4 ng-bind="_repo.name"></h4>
+            </div>
+          </md-list-item>
+        </md-list>
+        <div ng-hide="Ctrl.entity.repos.length">
+          No repos available for {{ Ctrl.entity.login }}. This may be because of one of the following reasons:
+          <ol>
+            <li>The admin has restricted repo access to a specific GitHub user/org other than the one you have selected.</li>
+            <li>The admin has restricted repo access to public repos, and the user/org you've selected does not have any public repos.</li>
+            <li>The selected user/org does not have any repos.</li>
+          </ol>
+        </div>
+      </md-content>
+    </md-content>
+  </md-content>
+  <md-content md-scroll-y flex layout-padding id="repo-details">
+    <div layout="row" layout-sm="column" layout-align="space-around" ng-show="Ctrl.loadingRepo">
+      <md-progress-circular md-mode="indeterminate"></md-progress-circular>
+    </div>
+    <md-content class="layout-column md-whiteframe-z1" layout="column" ng-hide="!Ctrl.repo || Ctrl.loadingRepo">
+      <md-toolbar class="demo-toolbar md-primary md-default-theme">
+        <div class="md-toolbar-tools">
+          <h3>{{ Ctrl.repo.name }}</h3>
+          <span flex="" class="flex"></span>
+        </div>
+      </md-toolbar>
+      <md-content class="layout-row" layout="row" layout-padding ng-if="Ctrl.repo.permissions.admin">
+        <md-switch ng-model="Ctrl.repo.enabled" aria-label="Enabled" ng-change="Ctrl.enableRepo(Ctrl.repo)">
+          Enabled
+        </md-switch>
+        <div layout="row" layout-sm="column" layout-align="space-around" ng-if="Ctrl.training">
+          <md-progress-circular md-mode="indeterminate"></md-progress-circular>
+        </div>
+      </md-content>
+      <md-content layout-padding class="layout-column model-list" layout="column">
+        <h3 style="padding-left: 16px;" ng-show="Ctrl.repo.models.length">Models</h3>
+        <h3 style="padding-left: 16px;" ng-hide="Ctrl.repo.models.length">No Models Yet</h3>
+        <md-list>
+          <md-list-item class="md-3-line model-item layout-column" layout="column">
+            <md-content class="layout-row" layout="row" layout-padding>
+              <md-input-container flex style="padding-bottom: 0;">
+                <label>
+                  model id
+                </label>
+                <input ng-model="Ctrl.modelId">
+                <md-tooltip>Activate a model for this repo</md-tooltip>
+              </md-input-container>
+              <md-button class="md-raised md-primary" aria-label="Add" ng-click="Ctrl.addModel(Ctrl.repo, Ctrl.modelId)" ng-if="Ctrl.modelId && !Ctrl.adding">
+                Add
+              </md-button>
+              <div layout="row" layout-sm="column" layout-align="space-around" ng-show="Ctrl.adding">
+                <md-progress-circular md-mode="indeterminate"></md-progress-circular>
+              </div>
+            </md-content>
+          </md-list-item>
+          <md-list-item class="md-3-line model-item layout-row" ng-repeat="model in Ctrl.repo.models track by model.id" layout="row">
+            <span style="margin: 27px 20px 0 0;">
+              <md-tooltip>Training Status: {{ model.trainingStatus }}</md-tooltip>
+              <md-icon md-font-set="material-icons">
+                {{ model.trainingStatus === 'DONE' ? 'done' : 'autorenew' }}
+              </md-icon>
+            </span>
+            <div class="md-list-item-text" layout="row">
+              <div class="md-list-item-text" layout="column">
+                <h3>{{ model.name }}</h3>
+                <h4>Label: {{ model.label }}</h4>
+                <h4 ng-if="model.trainingStatus === 'DONE'">Accuracy: {{ model.classificationAccuracy * 100 | number:2 }}%</h4>
+                <p ng-if="model.trainingStatus === 'DONE'"># of training examples: {{ model.numberInstances }}</p>
+              </div>
+              <p>
+                <md-button class="md-fab" aria-label="Remove model" ng-click="Ctrl.removeModel(model)">
+                  <md-icon md-font-set="material-icons">delete</md-icon>
+                  <md-tooltip>Remove model</md-tooltip>
+                </md-button>
+              </p>
+            </div>
+          </md-list-item>
+        </md-list>
+      </md-content>
+    </md-content>
+  </md-content>
+</div>

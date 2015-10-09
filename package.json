@@ -1,0 +1,48 @@
+{
+  "name": "labelcat",
+  "version": "1.0.0-alpha.1",
+  "private": true,
+  "author": "Jason Dobry <jdobry@google.com>",
+  "license": "Apache Version 2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GoogleCloudPlatform/LabelCat.git"
+  },
+  "engines": {
+    "node": ">= 4.x"
+  },
+  "scripts": {
+    "start": "node --harmony ${SCRIPT:-app.js}",
+    "monitor": "nodemon --harmony ${SCRIPT:-app.js}",
+    "test": "node --harmony node_modules/mocha/bin/mocha test/**/index.test.js",
+    "deploy": "gcloud preview app deploy app.yaml worker.yaml --version alpha-001 --promote"
+  },
+  "dependencies": {
+    "bluebird": "2.10.2",
+    "body-parser": "1.14.1",
+    "cookie-parser": "^1.4.0",
+    "cookie-session": "1.2.0",
+    "dependable": "0.2.5",
+    "ejs": "2.3.4",
+    "express": "4.13.3",
+    "express-winston": "0.4.1",
+    "gcloud": "0.23.0",
+    "github": "0.2.4",
+    "googleapis": "2.1.5",
+    "method-override": "2.3.5",
+    "passport": "0.3.0",
+    "passport-github": "1.0.0",
+    "request": "2.64.0",
+    "winston": "1.1.0"
+  },
+  "devDependencies": {
+    "chai": "3.3.0",
+    "chai-as-promised": "5.1.0",
+    "faker": "^3.0.1",
+    "keygrip": "^1.0.1",
+    "mocha": "2.3.3",
+    "sinon": "1.17.1",
+    "supertest": "1.1.0",
+    "supertest-as-promised": "2.0.2"
+  }
+}

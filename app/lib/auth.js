@@ -1,0 +1,64 @@
+// Copyright 2015, Google, Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+'use strict';
+
+let GitHubStrategy = require('passport-github').Strategy;
+let passport = require('passport');
+
+module.exports = function (request, config, dataset) {
+
+  passport.serializeUser(function (user, done) {
+    done(null, user.data);
+  });
+
+  passport.deserializeUser(function (user, done) {
+    done(null, {
+      key: {
+        namespace: undefined,
+        path: ['User', user.id]
+      },
+      data: user
+    });
+  });
+
+  // Use the GitHubStrategy within Passport.
+  // Strategies in Passport require a `verify` function, which accept
+  // credentials (in this case, an accessToken, refreshToken, and GitHub
+  // profile), and invoke a callback with a user object.
+  passport.use(new GitHubStrategy({
+    clientID: config.github.clientId,
+    clientSecret: config.github.clientSecret,
+    callbackURL: config.github.redirectUrl
+  }, function (accessToken, refreshToken, profile, done) {
+    return dataset.saveAsync({
+      key: dataset.key(['User', profile.id]),
+      data: {
+        id: profile._json.id,
+        login: profile._json.login,
+        avatar_url: profile._json.avatar_url,
+        repos_url: profile._json.repos_url,
+        organizations_url: profile._json.organizations_url,
+        access_token: accessToken
+      }
+    }).then(function () {
+      return dataset.getAsync(dataset.key(['User', profile.id]));
+    }).then(function (user) {
+      done(null, user);
+    }).catch(done);
+  }));
+
+  // not really anything to export
+  return passport;
+};
