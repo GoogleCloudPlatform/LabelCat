@@ -30,7 +30,7 @@ let container = require('./container');
 exports.createServer = function () {
 
   // Pull an initial set of dependencies from our IOC container
-  return container.resolve(function (config, utils, auth, logger, ensureAuthenticated, renderIndex, errorHandler, user, repos, models) {
+  return container.resolve(function (config, utils, auth, logger, ensureAuthenticated, errorHandler, user, repos, models) {
     let app = express();
 
     app.disable('etag');
@@ -40,10 +40,7 @@ exports.createServer = function () {
     app.use(bodyParser.json()); // parse application/json
     app.use(methodOverride()); // simulate DELETE and PUT (express4)
 
-    // Setup rendering for static files
-    app.set('views', './public');
-    app.set('view engine', 'ejs');
-    app.engine('html', require('ejs').renderFile);
+    // Setup static file folder
     app.use(express.static(`${__dirname}/public`));
 
     // Configure the session and session storage.
@@ -61,9 +58,6 @@ exports.createServer = function () {
 
     // Log every request
     app.use(logger.requestLogger);
-
-    // Render the home page
-    app.get('/', renderIndex);
 
     // GitHub authentication endpoints
     app.get('/auth/github', auth.authenticate('github', {
@@ -118,11 +112,9 @@ exports.createServer = function () {
 
     // Catch any other unknown requests by rendering the home page
     app.get('*', function (req, res, next) {
-      if (req.originalUrl.indexOf('socket.io') === -1) {
-        renderIndex(req, res, next);
-      } else {
-        next();
-      }
+      return res.sendFile('index.html', {
+        root: './public/'
+      });
     });
 
     // Add the error logger after all middleware and routes so that
