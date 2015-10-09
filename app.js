@@ -20,8 +20,8 @@ let http = require('http');
 
 // Middleware
 let bodyParser = require('body-parser');
-let methodOverride = require('method-override');
 let session = require('cookie-session');
+let csurf = require('csurf');
 
 // Initialize IOC container
 let container = require('./container');
@@ -36,7 +36,6 @@ exports.createServer = function () {
     app.disable('etag');
     app.use(jsonpSecurity); // Fix res.json to safely handle JSON vulnerability
     app.use(bodyParser.json()); // parse application/json
-    app.use(methodOverride()); // simulate DELETE and PUT (express4)
 
     // Setup static file folder
     app.use(express.static(`${__dirname}/public`));
@@ -49,6 +48,16 @@ exports.createServer = function () {
       secret: config.secret,
       signed: true
     }));
+
+    // Cross-site Request Forgery protection.
+    // A csrf token will automatically be stored in the user's cookie session.
+    app.use(csurf());
+
+    // Set the CSRF cookie
+    app.use(function (req, res, next) {
+      res.cookie('XSRF-TOKEN', req.csrfToken());
+      return next();
+    });
 
     // Activate our GitHub authentication middleware
     app.use(auth.initialize());

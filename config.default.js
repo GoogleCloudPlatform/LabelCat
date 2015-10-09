@@ -18,13 +18,13 @@ module.exports = {
   port: '8080',
   host: '127.0.0.1',
 
-  // Secret is used by sessions to encrypt the cookie
-  // Set it to something more secure
+  // Secret is used by cookie-session and csurf.
+  // Set it to something more secure.
   secret: 'your-secret-here',
 
   // Configuration for the gcloud-node and googleapis libraries
   gcloud: {
-    // This is the id of the project you created in Google Cloud, e.g. foo-issue-labeler.
+    // This is the id of the project you created in Google Cloud.
     // e.g. https://console.developers.google.com/project/<projectId>
     projectId: 'project-id-here',
     // Path to the JSON key file you downloaded when you created the Service Account
@@ -48,7 +48,7 @@ module.exports = {
     // The Client Secret of the application you registered on GitHub
     clientSecret: 'client-secret-here',
     // The callback url of the application you registered on GitHub
-    redirectUrl: process.env.NODE_ENV === 'production' ? 'https://foo-issue-labeler.appspot.com/auth/github/callback' : 'http://localhost:8080/auth/github/callback',
+    redirectUrl: process.env.NODE_ENV === 'production' ? 'https://<projectId>.appspot.com/auth/github/callback' : 'http://localhost:8080/auth/github/callback',
     // A secret used to secure incoming webhooks coming from GitHub
     webhookSecret: 'your-secret-here'
   }
