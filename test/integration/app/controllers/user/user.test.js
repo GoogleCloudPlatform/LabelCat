@@ -35,6 +35,7 @@ module.exports = function (container, assert, testRequest, Promise, createSessio
       let response = yield testRequest(app)
                             .get('/api/user')
                             .set('Cookie', createSessionCookie(userSession))
+                            .use(testRequest.fixJson)
                             .expect(200);
 
       assert.deepEqual(response.body, {

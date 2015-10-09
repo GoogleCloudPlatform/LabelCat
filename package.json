@@ -35,12 +35,10 @@
   },
   "devDependencies": {
     "chai": "3.3.0",
-    "chai-as-promised": "5.1.0",
     "faker": "3.0.1",
     "keygrip": "1.0.1",
     "mocha": "2.3.3",
     "sinon": "1.17.1",
-    "supertest": "1.1.0",
-    "supertest-as-promised": "2.0.2"
+    "supertest": "1.1.0"
   }
 }

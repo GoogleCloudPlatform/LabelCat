@@ -34,21 +34,7 @@ container.register('createServer', function () {
 
 // Assertion library
 container.register('assert', function () {
-  let chai = require('chai');
-  let chaiAsPromised = require('chai-as-promised');
-
-  chai.use(chaiAsPromised);
-
-  // Helper function for comparing objects
-  chai.assert.objectsEqual = function (a, b, msg) {
-    chai.assert.deepEqual(
-      JSON.parse(JSON.stringify(a)),
-      JSON.parse(JSON.stringify(b)),
-      msg
-    )
-  };
-
-  return chai.assert;
+  return require('chai').assert;
 });
 
 // Mocking & stubbing library
@@ -58,7 +44,39 @@ container.register('sinon', function () {
 
 // This allows us to hit and test our Express app with real HTTP requests
 container.register('testRequest', function () {
-  return require('supertest-as-promised');
+  let testRequest = require('supertest');
+
+  // Special handling of application/json because our app uses a security prefix
+  testRequest.fixJson = function (req) {
+    req.parse(function (res, cb) {
+      res.text = '';
+      res.setEncoding('utf8');
+      res.on('data', function (chunk) {
+        res.text += chunk;
+      });
+      res.on('end', function () {
+        let body, error;
+
+        try {
+          let text = res.text && res.text.replace(/^\s*|\s*$/g, '');
+
+          // Strip out JSON security prefix
+          if (text && typeof text === 'string' && text.length >= 6
+                && text.substr(0, 6) === ')]}\',\n') {
+            body = JSON.parse(text.substring(6));
+          } else {
+            body = text && JSON.parse(text);
+          }
+        } catch (err) {
+          error = err;
+        } finally {
+          cb(error, body);
+        }
+      });
+    })
+  };
+
+  return testRequest;
 });
 
 // This allows us to simulate the Express cookie-session middleware,

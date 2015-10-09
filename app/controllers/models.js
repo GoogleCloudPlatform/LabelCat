@@ -24,14 +24,14 @@ module.exports = function (Promise, Model, container, messages) {
       if (!model) {
         return res.status(404).end();
       } else {
-        return res.status(200).send(model.toJSON()).end();
+        return res.status(200).json(model.toJSON()).end();
       }
     }),
 
     // GET /api/models
     findAll: Promise.coroutine(function* (req, res) {
       let models = yield Model.findAll(req.query);
-      return res.status(200).send(models.map(function (model) {
+      return res.status(200).json(models.map(function (model) {
         return model.toJSON();
       })).end();
     }),
@@ -40,18 +40,18 @@ module.exports = function (Promise, Model, container, messages) {
     createOne: Promise.coroutine(function* (req, res) {
       req.body.userId = req.user.data.id;
       let model = yield Model.createOne(req.body);
-      return res.status(201).send(model.toJSON()).end();
+      return res.status(201).json(model.toJSON()).end();
     }),
 
     // PUT /api/models/:id
     updateOneById: Promise.coroutine(function* (req, res) {
-      let model = Model.findOneById(req.params.id);
+      let model = yield Model.findOneById(req.params.id);
       if (!model || model.get('userId') !== req.user.data.id) {
         return res.status(404).end();
       } else {
         model.set(req.body);
         yield model.save();
-        return res.status(200).send(model.toJSON()).end();
+        return res.status(200).json(model.toJSON()).end();
       }
     }),
 

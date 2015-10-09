@@ -24,11 +24,14 @@ module.exports = function (Promise, github, config, Repo) {
      */
     user: function (req, res) {
       if (req.isAuthenticated()) {
-        return res.status(200).send({
-          id: req.user.data.id,
-          login: req.user.data.login,
-          avatar_url: req.user.data.avatar_url
-        }).end();
+        return res
+          .status(200)
+          .json({
+            id: req.user.data.id,
+            login: req.user.data.login,
+            avatar_url: req.user.data.avatar_url
+          })
+          .end();
       } else {
         return res.status(200).end();
       }
@@ -47,7 +50,7 @@ module.exports = function (Promise, github, config, Repo) {
           return repo.owner.login === config.github.ownerRestriction;
         });
       }
-      return res.status(200).send(repos.map(Repo.serializeRepo)).end();
+      return res.status(200).json(repos.map(Repo.serializeRepo)).end();
     })
   };
 };

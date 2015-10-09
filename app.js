@@ -30,13 +30,11 @@ let container = require('./container');
 exports.createServer = function () {
 
   // Pull an initial set of dependencies from our IOC container
-  return container.resolve(function (config, utils, auth, logger, ensureAuthenticated, errorHandler, user, repos, models) {
+  return container.resolve(function (config, utils, auth, logger, jsonpSecurity, ensureAuthenticated, errorHandler, user, repos, models) {
     let app = express();
 
     app.disable('etag');
-    app.use(bodyParser.urlencoded({
-      extended: true
-    })); // parse application/x-www-form-urlencoded
+    app.use(jsonpSecurity); // Fix res.json to safely handle JSON vulnerability
     app.use(bodyParser.json()); // parse application/json
     app.use(methodOverride()); // simulate DELETE and PUT (express4)
 

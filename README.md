@@ -11,9 +11,15 @@ ask? You did...or rather, you will. Once deployed, you must train LabelCat on
 previously labeled issues, preferably from a variety of well-labeled
 repositories.
 
-While the instructions in this guide show how to deploy LabelCat to the Google
-Cloud Platform for maximum ease-of-use and scalability, LabelCat can be deployed
-virtually anywhere.
+These instructions show how to deploy LabelCat to the Google Cloud Platform for
+maximum ease-of-use and scalability, but LabelCat can be deployed virtually
+anywhere.
+
+Many Google Cloud Platform Node.js samples are small and simple, focusing on a
+single concept or piece of functionality. LabelCat fills the void somewhat by
+showcasing a larger Node.js that addresses a number of production concerns. As
+such LabelCat is an excellent resource as you build your own production Node.js
+applications on Google Cloud Platform.
 
 Built by [@jmdobry][1]
 

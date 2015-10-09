@@ -45,11 +45,11 @@ module.exports = function (dataset, prediction, config, github, Promise, contain
       // TODO: Check to make sure GitHub returned a repo
 
       if (!datastoreRepo) {
-        return res.status(200).send(Repo.serializeRepo(githubRepo)).end();
+        return res.status(200).json(Repo.serializeRepo(githubRepo)).end();
       } else {
         let models = yield Model.getAll(datastoreRepo.get('modelIds') || []);
         datastoreRepo.set('models', models);
-        return res.status(200).send(Repo.serializeRepo(datastoreRepo.toJSON())).end();
+        return res.status(200).json(Repo.serializeRepo(datastoreRepo.toJSON())).end();
       }
     }),
 
@@ -61,7 +61,7 @@ module.exports = function (dataset, prediction, config, github, Promise, contain
     search: Promise.coroutine(function* (req, res) {
       let repo = github.searchForRepo(req.user.data, req.params.owner, req.params.repo);
       if (repo) {
-        return res.status(200).send(Repo.serializeRepo(repo)).end();
+        return res.status(200).json(Repo.serializeRepo(repo)).end();
       } else {
         return res.status(200).end();
       }
@@ -101,7 +101,7 @@ module.exports = function (dataset, prediction, config, github, Promise, contain
       repo.set('userId', req.user.data.id);
       repo.set(req.body);
       yield repo.save();
-      return res.status(200).send(repo.toJSON()).end();
+      return res.status(200).json(repo.toJSON()).end();
     }),
 
     /**
@@ -154,9 +154,9 @@ module.exports = function (dataset, prediction, config, github, Promise, contain
           });
           if (labelsToAdd.length) {
             yield github.addLabelsToIssue(labelsToAdd, req.body.issue.number, repo.toJSON(), user.data);
-            return res.status(200).send(results).end();
+            return res.status(200).json(results).end();
           } else {
-            return res.status(200).send(results).end();
+            return res.status(200).json(results).end();
           }
         } else {
           return res.status(404).end();
@@ -167,7 +167,7 @@ module.exports = function (dataset, prediction, config, github, Promise, contain
     }),
 
     hooks(req, res, next) {
-      return res.status(200).send(receivedHooks).end();
+      return res.status(200).json(receivedHooks).end();
     }
   };
 };
