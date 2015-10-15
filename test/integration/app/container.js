@@ -105,10 +105,9 @@ container.register('bootstrap', function (container, sinon, githubApiMock) {
       passport: {
         user: {
           id: 1234,
-          organizations_url: 'https://api.github.com/users/alice/orgs',
-          avatar_url: 'https://avatars.githubusercontent.com/u/1234?v=3',
+          key: '11-22-33-44',
           login: 'alice',
-          repos_url: 'https://api.github.com/users/alice/repos',
+          avatar_url: 'https://avatars.githubusercontent.com/u/1234?v=3',
           access_token: 'alice_access_token'
         }
       }

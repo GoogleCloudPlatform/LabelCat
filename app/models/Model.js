@@ -14,11 +14,14 @@
 
 'use strict';
 
-module.exports = function (Base, prediction, Promise, dataset, Repo, logger, github) {
+let uuid = require('node-uuid');
+
+module.exports = function (Base, container, prediction, Promise, dataset, logger, github, config) {
   
   class Model extends Base {
     constructor(props) {
-      super(props, 'Model');
+      props.key = props.key || uuid.v4();
+      super(props.key, props, 'Model');
     }
 
     /******************
@@ -29,13 +32,13 @@ module.exports = function (Base, prediction, Promise, dataset, Repo, logger, git
      * Remove a single model from the datastore and delete the corresponding
      * model from the Prediction API.
      *
-     * @param {string} id - The id of the model to delete.
+     * @param {string} key - The key of the model to delete.
      */
-    static destroyOneById(id) {
+    static destroyOne(key) {
       // Call the parent implementation first.
-      return super.destroyOneById(id).then(function (model) {
+      return super.destroyOne(key).then(function (model) {
         // Now retrieve the model from the Prediction API.
-        return prediction.destroyModelById(id).catch(function (err) {
+        return prediction.destroyModelById(key).catch(function (err) {
           if (err.code === 404) {
             return err;
           } else {
@@ -49,13 +52,13 @@ module.exports = function (Base, prediction, Promise, dataset, Repo, logger, git
      * Retrieve single model from the datastore and retrieve the corresponding
      * model from the Prediction API.
      *
-     * @param {string} id - The id of the model to retrieve.
+     * @param {string} key - The key of the model to retrieve.
      */
-    static findOneById(id) {
+    static findOne(key) {
       // Call the parent implementation first.
-      return super.findOneById(id).then(function (model) {
+      return super.findOne(key).then(function (model) {
         // Now retrieve the model from the Prediction API.
-        return prediction.getModelById(id).spread(function (predictionResults) {
+        return prediction.getModelById(key).spread(function (predictionResults) {
           // Prediction API only overrides our stored status in certain cases.
           if (model.get('trainingStatus') !== 'QUEUED' || predictionResults.trainingStatus === 'RUNNING') {
             model.set('trainingStatus', predictionResults.trainingStatus);
@@ -65,7 +68,7 @@ module.exports = function (Base, prediction, Promise, dataset, Repo, logger, git
             model.set('created', predictionResults.created);
             model.set('trainingComplete', predictionResults.trainingComplete);
           }
-          return prediction.analyzeModelById(id);
+          return prediction.analyzeModelById(key);
         }).spread(function (analysisResults) {
           model.set(analysisResults.modelDescription);
           model.set('outputFeature', analysisResults.dataDescription.outputFeature.text);
@@ -85,16 +88,18 @@ module.exports = function (Base, prediction, Promise, dataset, Repo, logger, git
     /**
      * Train a model.
      *
-     * @param {string} id - The id of the model to train.
+     * @param {string} key - The key of the model to train.
      */
-    static trainOneById(id) {
+    static trainOne(key) {
+      let User = container.get('User');
+
       // Get the model.
-      return this.findOneById(id).then(function (model) {
+      return this.findOne(key).then(function (model) {
         // Check to make sure it's not already running.
         if (model && model.get('trainingStatus') !== 'RUNNING') {
           let user;
           // Get the user so we have an access_token.
-          return dataset.getAsync(dataset.key(['User', model.get('userId')])).then(function (_user) {
+          return User.findOne(model.get('userKey')).then(function (_user) {
             user = _user;
             // Make sure the model has some repos to analyze.
             if (model.get('repos') && model.get('repos').length) {
@@ -105,7 +110,7 @@ module.exports = function (Base, prediction, Promise, dataset, Repo, logger, git
           }).then(function (repos) {
             // Get all of the issues for all of the repos to be analyzed.
             return Promise.all(repos.map(function (repo) {
-              return github.getIssuesForRepo(user.data, repo, 1);
+              return github.getIssuesForRepo(user, repo, 1);
             }));
           }).then(function (results) {
             let issues = [];
@@ -113,9 +118,9 @@ module.exports = function (Base, prediction, Promise, dataset, Repo, logger, git
               issues = issues.concat(_issues);
             });
             // Finally, train the model in the Prediction API.
-            return prediction.trainModel(model.get('id'), prediction.createExamples(model, issues));
+            return prediction.trainModel(model.get('key'), prediction.createExamples(model, issues));
           }).spread(function () {
-            return prediction.getModelById(id);
+            return prediction.getModelById(key);
           }).spread(function (predictionResults) {
             model.set('trainingStatus', predictionResults.trainingStatus);
             return model.save();

@@ -82,9 +82,9 @@ exports.createServer = function () {
      * @param {object} message - PubSub message. See https://googlecloudplatform.github.io/gcloud-node/#/docs/pubsub/topic?method=subscription
      */
     function handleMessage(message) {
-      var modelId = message.data;
+      var modelKey = message.data;
 
-      if (typeof modelId !== 'string' && typeof modelId !== 'number') {
+      if (typeof modelKey !== 'string' && typeof modelKey !== 'number') {
         logger.warn('Unknown request', message.data);
         // Immediately ack the message
         message.ack(function (err) {
@@ -93,17 +93,17 @@ exports.createServer = function () {
           }
         });
       } else {
-        logger.info('Training model: ', modelId);
-        Model.trainOneById(modelId).catch(function (err) {
-          logger.error('Failed to train model: ', modelId);
+        logger.info('Training model: ', modelKey);
+        Model.trainOne(modelKey).catch(function (err) {
+          logger.error('Failed to train model: ', modelKey);
           logger.error(err);
         }).finally(function () {
-          logger.info('Acking model: ', modelId);
+          logger.info('Acking model: ', modelKey);
           message.ack(function (err) {
             if (err) {
               logger.error(err);
             } else {
-              logger.info('Acked model: ', modelId);
+              logger.info('Acked model: ', modelKey);
             }
           });
         });

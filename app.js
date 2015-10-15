@@ -87,7 +87,7 @@ exports.createServer = function () {
     app.get('/api/user/repos', ensureAuthenticated, utils.makeSafe(user.repos));
 
     // Trigger training for the specified model
-    app.post('/api/models/:id/train', ensureAuthenticated, utils.makeSafe(models.train));
+    app.post('/api/models/:key/train', ensureAuthenticated, utils.makeSafe(models.trainOne));
 
     app.route('/api/models')
     // Return a collection of models
@@ -95,27 +95,29 @@ exports.createServer = function () {
     // Create a new model
     .post(ensureAuthenticated, utils.makeSafe(models.createOne));
 
-    app.route('/api/models/:id')
-    // Return a model
-    .get(ensureAuthenticated, utils.makeSafe(models.findOneById))
-    // Update a model
-    .put(ensureAuthenticated, utils.makeSafe(models.updateOneById))
-    // Delete a model
-    .delete(ensureAuthenticated, utils.makeSafe(models.destroyOneById));
+    app.route('/api/models/:key')
+      // Return a model
+      .get(ensureAuthenticated, utils.makeSafe(models.findOne))
+      // Update a model
+      .put(ensureAuthenticated, utils.makeSafe(models.updateOne))
+      // Delete a model
+      .delete(ensureAuthenticated, utils.makeSafe(models.destroyOne));
 
     // Receiving a GitHub webhook on issue creation
-    app.post('/api/repos/:id/hook', utils.makeSafe(repos.hook));
+    app.post('/api/repos/:key/hook', utils.makeSafe(repos.hook));
 
     // Search GitHub for a repo with the specified owner and name    
     app.get('/api/repos/search/:owner/:repo', ensureAuthenticated, utils.makeSafe(repos.search))
-    app.route('/api/repos/:id')
-
-    // Return a repo
-    .get(ensureAuthenticated, utils.makeSafe(repos.findOneById))
-    // Update a repo
-    .put(ensureAuthenticated, utils.makeSafe(repos.updateOneById))
-    // Delete a repo
-    .delete(ensureAuthenticated, utils.makeSafe(repos.destroyOneById));
+    app.route('/api/repos/:key')
+      // Return a repo
+      .get(ensureAuthenticated, utils.makeSafe(repos.findOne))
+      // Update a repo
+      .put(ensureAuthenticated, utils.makeSafe(repos.updateOne))
+      // Delete a repo
+      .delete(ensureAuthenticated, utils.makeSafe(repos.destroyOne));
+    app.route('/api/repos')
+      // Return a repo
+      .get(ensureAuthenticated, utils.makeSafe(repos.findAll));
 
     // Catch any other unknown requests by rendering the home page
     app.get('*', function (req, res, next) {

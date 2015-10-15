@@ -30,7 +30,9 @@ module.exports = {
     // Path to the JSON key file you downloaded when you created the Service Account
     // credentials for your Google Cloud project.
     // See https://console.developers.google.com/project/<projectId>/apiui/credential
-    keyFile: './key.json'
+    keyFile: './key.json',
+    // Datastore Namespace
+    namespace: 'LabelCat'
   },
 
   // Configuration for GitHub authentication

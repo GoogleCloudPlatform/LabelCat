@@ -24,7 +24,7 @@ resources:
 
 automatic_scaling:
   min_num_instances: 1
-  max_num_instances: 5
+  max_num_instances: 3
   cool_down_period_sec: 60
   cpu_utilization:
     target_utilization: 0.75

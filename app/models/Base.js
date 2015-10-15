@@ -14,11 +14,12 @@
 
 'use strict';
 
-module.exports = function (dataset, Promise) {
+module.exports = function (config, dataset, Promise) {
   
   class Base {
-    constructor(props, kind) {
-      this.props = props || {};
+    constructor(key, data, kind) {
+      this.key = key;
+      this.data = data || {};
       this.kind = kind;
     }
 
@@ -32,7 +33,7 @@ module.exports = function (dataset, Promise) {
      * @param {string} key - The name of the property to retrieve.
      */
     get(key) {
-      return this.props[key];
+      return this.data[key];
     }
 
     /**
@@ -43,10 +44,10 @@ module.exports = function (dataset, Promise) {
      */
     set(key, value) {
       if (typeof key === 'string') {
-        this.props[key] = value;
+        this.data[key] = value;
       } else if (typeof key === 'object') {
         for (var _key in key) {
-          this.props[_key] = key[_key];
+          this.data[_key] = key[_key];
         }
       }
       return this;
@@ -56,25 +57,20 @@ module.exports = function (dataset, Promise) {
      * Return this entity's has of properties.
      */
     toJSON() {
-      return this.props;
+      return this.data;
     }
 
     /**
      * Save this entity in its current state to the datastore.
      */
     save() {
-      let key = this.get('id') ? dataset.key([this.kind, this.get('id')]) : dataset.key(this.kind);
       return dataset.saveAsync({
-        key: key,
-        data: this.props
-      }).then(() => {
-        if (!this.get('id')) {
-          this.props.id = key.path[1];
-          return this.save();
-        } else {
-          return this;
-        }
-      });
+        key: dataset.key({
+          namespace: config.gcloud.namespace,
+          path: [this.kind, this.key]
+        }),
+        data: this.data
+      }).then(() => this);
     }
 
     /******************
@@ -84,14 +80,17 @@ module.exports = function (dataset, Promise) {
     /**
      * Remove a single entity from the datastore.
      *
-     * @param {string} id - Id of the entity to retrieve.
+     * @param {string} key - The key of the entity to retrieve.
      */
-    static findOneById(id) {
-      if (!id || (typeof id !== 'number' && typeof id !== 'string')) {
-        return Promise.reject(new Error('You must provide an id!'));
+    static findOne(key) {
+      if (!key || typeof key !== 'string') {
+        return Promise.reject(new Error('You must provide a key!'));
       } else {
-        var Constructor = this;
-        return dataset.getAsync(dataset.key([this.name, parseInt(id, 10)])).then(function (instance) {
+        let Constructor = this;
+        return dataset.getAsync(dataset.key({
+          namespace: config.gcloud.namespace,
+          path: [this.name, key]
+        })).then(function (instance) {
           return instance ? new Constructor(instance.data) : null;
         });
       }
@@ -105,50 +104,52 @@ module.exports = function (dataset, Promise) {
     static findAll(params) {
       params = params || {};
       let Constructor = this;
-      let query = dataset.createQuery(null, Constructor.name);
+      let query = dataset.createQuery(config.gcloud.namespace, Constructor.name);
       if (params.modelId) {
         query = query.filter('modelId =', parseInt(params.modelId, 10));
       }
-      if (params.userId) {
-        query = query.filter('userId =', parseInt(params.userId, 10));
+      if (params.userKey) {
+        query = query.filter('userKey =', parseInt(params.userKey, 10));
       }
-      if (params.ownerId) {
-        query = query.filter('ownerId =', parseInt(params.ownerId, 10));
+      if (params.ownerLogin) {
+        query = query.filter('ownerLogin =', params.ownerLogin);
       }
-      if (params.githubId) {
-        query = query.filter('githubId =', parseInt(params.githubId, 10));
+      if (params.full_name) {
+        query = query.filter('full_name =', params.full_name);
       }
       query = query.limit(1000).start(0);
 
       return dataset.runQueryAsync(query).spread(function (entities) {
         return entities.map(function (entity) {
-          entity.data.id = entity.key.path[1];
           return new Constructor(entity.data);
         });
       });
     }
 
     /**
-     * Remove a collection of entities from the datastore by their IDs.
+     * Remove a collection of entities from the datastore by their keys.
      *
-     * @param {array} ids - Array of IDs.
+     * @param {array} keys - Array of keys.
      */
-    static getAll(ids) {
-      return Promise.all(ids.map(id => {
-        return this.findOneById(id);
+    static getAll(keys) {
+      return Promise.all(keys.map(key => {
+        return this.findOne(key);
       }));
     }
 
     /**
      * Remove a single entity from the datastore.
      *
-     * @param {string} id - The id of the entity to delete.
+     * @param {string} key - The key of the entity to delete.
      */
-    static destroyOneById(id) {
-      if (!id || (typeof id !== 'number' && typeof id !== 'string')) {
-        return Promise.reject(new Error('You must provide an id!'));
+    static destroyOne(key) {
+      if (!key || typeof key !== 'string') {
+        return Promise.reject(new Error('You must provide a key!'));
       } else {
-        return dataset.deleteAsync(dataset.key([this.name, id]));
+        return dataset.deleteAsync(dataset.key({
+          namespace: config.gcloud.namespace,
+          path: [this.name, key]
+        }));
       }
     }
 
@@ -160,21 +161,12 @@ module.exports = function (dataset, Promise) {
     static destroyAll(params) {
       return this.findAll(params).then(entities => {
         return dataset.deleteAsync(entities.map(entity => {
-          return dataset.key([this.name, entity.get('id')]);
+          return dataset.key({
+            namespace: config.gcloud.namespace,
+            path: [this.name, entity.key]
+          });
         }))
       });
-    }
-
-    /**
-     * Insert a new entity into the datastore.
-     *
-     * @param {object} props - Properties of the entity to be created.
-     */
-    static createOne(props) {
-      props = props || {};
-      let Constructor = this;
-      let instance = new Constructor(props);
-      return instance.save();
     }
   }
 

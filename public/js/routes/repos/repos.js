@@ -32,6 +32,6 @@ angular.module('labelcat').config(function ($routeProvider) {
   };
   
   $routeProvider
-    .when('/:login/repos', routeConfig)
-    .when('/:login/repos/:id', routeConfig);
+    .when('/:login/repos/:name', routeConfig)
+    .when('/:login/repos', routeConfig);
 });

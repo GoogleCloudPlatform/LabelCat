@@ -40,6 +40,7 @@ module.exports = function (container, assert, testRequest, Promise, createSessio
 
       assert.deepEqual(response.body, {
         id: userSession.passport.user.id,
+        key: userSession.passport.user.key,
         login: userSession.passport.user.login,
         avatar_url: userSession.passport.user.avatar_url
       }, 'Response body should be the authenticated user');

@@ -28,6 +28,7 @@
     "gcloud": "0.23.0",
     "github": "0.2.4",
     "googleapis": "2.1.5",
+    "node-uuid": "^1.4.3",
     "passport": "0.3.0",
     "passport-github": "1.0.0",
     "request": "2.64.0",

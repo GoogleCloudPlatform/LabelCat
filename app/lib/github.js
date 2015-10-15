@@ -22,7 +22,7 @@ module.exports = function (container, config, Promise, request) {
     let githubApi = container.get('githubApi');
     githubApi.authenticate({
       type: 'oauth',
-      token: user.access_token
+      token: user.get('access_token')
     });
     return githubApi;
   }
@@ -101,7 +101,7 @@ module.exports = function (container, config, Promise, request) {
           'issues'
         ],
         config: {
-          url: `https://github-issue-labeler.appspot.com/api/repos/${repo.id}/hook`,
+          url: `https://github-issue-labeler.appspot.com/api/repos/${repo.key}/hook`,
           content_type: 'json',
           secret: config.github.webhookSecret
         }
@@ -175,7 +175,7 @@ module.exports = function (container, config, Promise, request) {
     getReposForUser(user, page) {
       return new Promise((resolve, reject) => {
         api(user).repos.getAll({
-          user: user.login,
+          user: user.get('login'),
           type: 'all',
           page: page,
           per_page: 100
@@ -234,7 +234,7 @@ module.exports = function (container, config, Promise, request) {
           // Hook already exists, so return the existing one
           return listHooks(repo, user, 1).then(function (hooks) {
             let hook;
-            let testUrl = `https://${config.gcloud.projectId}.appspot.com/api/repos/${repo.id}/hook`;
+            let testUrl = `https://${config.gcloud.projectId}.appspot.com/api/repos/${repo.key}/hook`;
             hooks.forEach(function (_hook) {
               if (_hook.config && _hook.config.url && _hook.config.url === testUrl) {
                 hook = _hook;
@@ -290,7 +290,7 @@ module.exports = function (container, config, Promise, request) {
         url: `https://api.github.com/repos/${repo.owner.login}/${repo.name}/issues/${number}/labels`,
         method: 'POST',
         qs: {
-          access_token: user.access_token
+          access_token: user.get('access_token')
         },
         body: labels,
         json: true,

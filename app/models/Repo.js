@@ -14,11 +14,14 @@
 
 'use strict';
 
+let uuid = require('node-uuid');
+
 module.exports = function (Base) {
   
   class Repo extends Base {
     constructor(props) {
-      super(props, 'Repo');
+      props.key = props.key || uuid.v4();
+      super(props.key, props, 'Repo');
     }
 
     /******************
@@ -31,22 +34,22 @@ module.exports = function (Base) {
      * @param {object} repo - The repo to serialize.
      */
     static serializeRepo(repo) {
-      if (repo.data && repo.key) {
+      if (typeof repo.toJSON === 'function') {
+        return repo.toJSON();
+      } else if (repo.data && repo.key) {
         repo = repo.data;
       }
       return {
+        key: repo.key,
         id: repo.id,
         name: repo.name,
-        description: repo.description,
         full_name: repo.full_name,
-        html_url: repo.html_url,
-        has_issues: repo.has_issues,
         enabled: !!repo.enabled,
-        private: repo.private,
-        fork: repo.fork,
-        modelIds: repo.modelIds || [],
+        modelKeys: repo.modelKeys || [],
         models: repo.models || [],
         permissions: repo.permissions,
+        userKey: repo.userKey,
+        userLogin: repo.userLogin,
         owner: {
           login: repo.owner.login,
           id: repo.owner.id,

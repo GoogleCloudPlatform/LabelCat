@@ -45,8 +45,11 @@ angular.module('labelcat').service('Base', function ($q, $http) {
    * @param {object=} props - Properties with which to update the entity.
    */
   Base.prototype.updateOneById = function (id, props) {
-    if (typeof id !== 'string' && typeof id !== 'number') {
-      return $q.reject(new Error('You must provide an id!'));
+    var _this = this;
+    if (!id || typeof id !== 'string') {
+      return this.createOne({}).then(function (entity) {
+        return _this.updateOneById(entity.key, props);
+      });
     } else {
       props = props || {};
       return $http.put('/api/' + this.pathname + '/' + id, props).then(function (response) {

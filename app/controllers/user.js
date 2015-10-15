@@ -26,11 +26,7 @@ module.exports = function (Promise, github, config, Repo) {
       if (req.isAuthenticated()) {
         return res
           .status(200)
-          .json({
-            id: req.user.data.id,
-            login: req.user.data.login,
-            avatar_url: req.user.data.avatar_url
-          })
+          .json(req.user.safeToJSON())
           .end();
       } else {
         return res.status(200).end();
@@ -44,7 +40,7 @@ module.exports = function (Promise, github, config, Repo) {
      * according to the scope of the current access token.
      */
     repos: Promise.coroutine(function* (req, res) {
-      let repos = yield github.getReposForUser(req.user.data, 1);
+      let repos = yield github.getReposForUser(req.user, 1);
       if (typeof config.github.ownerRestriction === 'string') {
         repos = repos.filter(function (repo) {
           return repo.owner.login === config.github.ownerRestriction;

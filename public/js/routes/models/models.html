@@ -26,7 +26,7 @@ limitations under the License. -->
       </md-toolbar>
       <md-content layout-padding>
         <md-list id="repo-list" class="layout-column" layout="column" md-scroll-y>
-          <md-list-item class="md-1-line" ng-repeat="model in Ctrl.models track by model.id" ng-click="Ctrl.viewModel(model)" ng-class="{active: Ctrl.model === model}">
+          <md-list-item class="md-1-line" ng-repeat="model in Ctrl.models track by model.key" ng-click="Ctrl.viewModel(model)" ng-class="{active: Ctrl.model === model}">
             <div class="md-list-item-text" layout="column">
               <h4>{{ model.name || 'new-model' }}</h4>
             </div>
@@ -48,16 +48,16 @@ limitations under the License. -->
       <md-toolbar class="demo-toolbar md-primary md-default-theme">
         <div class="md-toolbar-tools">
           <h3>{{ Ctrl.model.name || 'new-model' }}</h3>
-          <span flex="" class="flex" ng-show="Ctrl.hasChanges || Ctrl.model.id === 'new' || Ctrl.processing"></span>
+          <span flex="" class="flex" ng-show="Ctrl.hasChanges || Ctrl.model.key === 'new' || Ctrl.processing"></span>
           <div layout="row" layout-sm="column" layout-align="space-around" ng-show="Ctrl.processing">
             <md-progress-circular class="md-warn" md-mode="indeterminate"></md-progress-circular>
           </div>
-          <small ng-show="Ctrl.hasChanges || Ctrl.model.id === 'new'">You have unsaved changes!</small>
+          <small ng-show="Ctrl.hasChanges || Ctrl.model.key === 'new'">You have unsaved changes!</small>
           <span flex="" class="flex"></span>
           <md-button class="md-raised" aria-label="Save" ng-click="Ctrl.save(Ctrl.model)" ng-disable="Ctrl.processing">
             <span>Save</span>
           </md-button>
-          <md-button class="md-raised md-warn" aria-label="Cancel" ng-click="Ctrl.cancel(Ctrl.model)" ng-if="!Ctrl.model.id && !Ctrl.saving">
+          <md-button class="md-raised md-warn" aria-label="Cancel" ng-click="Ctrl.cancel(Ctrl.model)" ng-if="!Ctrl.model.key && !Ctrl.saving">
             Cancel
           </md-button>
         </div>
@@ -72,12 +72,12 @@ limitations under the License. -->
           <input ng-model="Ctrl.model.label" ng-disable="Ctrl.processing">
         </md-input-container>
       </md-content>
-      <md-content class="layout-row" layout="row" layout-padding ng-if="Ctrl.model.id">
+      <md-content class="layout-row" layout="row" layout-padding ng-if="Ctrl.model.key">
         <p>
           You must re-train the model if you change the label or add another repo to the analysis.
         </p>
       </md-content>
-      <md-content class="layout-row" layout="row" ng-if="Ctrl.model.id !== 'new'">
+      <md-content class="layout-row" layout="row" ng-if="Ctrl.model.key !== 'new'">
         <md-content layout-padding class="layout-column model-list" layout="column">
           <h3 style="padding-left: 16px;" ng-show="Ctrl.model.repos.length">Repos to analyze</h3>
           <h3 style="padding-left: 16px;" ng-hide="Ctrl.model.repos.length">No repos analyzed yet</h3>

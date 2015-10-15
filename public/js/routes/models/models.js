@@ -33,5 +33,5 @@ angular.module('labelcat').config(function ($routeProvider) {
 
   $routeProvider
     .when('/:login/models', routeConfig)
-    .when('/:login/models/:id', routeConfig);
+    .when('/:login/models/:key', routeConfig);
 });

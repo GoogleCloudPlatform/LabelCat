@@ -14,13 +14,15 @@
 
 'use strict';
 
-module.exports = function (Promise, Model, container, messages) {
+module.exports = function (Promise, container, messages) {
   let Repo = container.get('Repo');
+  let Model = container.get('Model');
+  let User = container.get('User');
   
   return {
-    // GET /api/models/:id
-    findOneById: Promise.coroutine(function* (req, res) {
-      let model = yield Model.findOneById(req.params.id);
+    // GET /api/models/:key
+    findOne: Promise.coroutine(function* (req, res) {
+      let model = yield Model.findOne(req.params.key);
       if (!model) {
         return res.status(404).end();
       } else {
@@ -38,15 +40,16 @@ module.exports = function (Promise, Model, container, messages) {
 
     // POST /api/models
     createOne: Promise.coroutine(function* (req, res) {
-      req.body.userId = req.user.data.id;
-      let model = yield Model.createOne(req.body);
+      req.body.userKey = req.user.get('key');
+      let model = new Model(req.body);
+      yield model.save();
       return res.status(201).json(model.toJSON()).end();
     }),
 
-    // PUT /api/models/:id
-    updateOneById: Promise.coroutine(function* (req, res) {
-      let model = yield Model.findOneById(req.params.id);
-      if (!model || model.get('userId') !== req.user.data.id) {
+    // PUT /api/models/:key
+    updateOne: Promise.coroutine(function* (req, res) {
+      let model = yield Model.findOne(req.params.key);
+      if (!model || model.get('userKey') !== req.user.get('key')) {
         return res.status(404).end();
       } else {
         model.set(req.body);
@@ -55,15 +58,15 @@ module.exports = function (Promise, Model, container, messages) {
       }
     }),
 
-    // DELETE /api/models/:id
-    destroyOneById: Promise.coroutine(function* (req, res) {
-      yield Model.destroyOneById(req.params.id);
+    // DELETE /api/models/:key
+    destroyOne: Promise.coroutine(function* (req, res) {
+      yield Model.destroyOne(req.params.key);
       return res.status(204).end();
     }),
 
-    // POST /api/models/:id/train
-    train: Promise.coroutine(function* (req, res) {
-      let model = yield Model.findOneById(req.params.id);
+    // POST /api/models/:key/train
+    trainOne: Promise.coroutine(function* (req, res) {
+      let model = yield Model.findOne(req.params.key);
 
       if (!model) {
         return res.status(404).end();
@@ -72,7 +75,7 @@ module.exports = function (Promise, Model, container, messages) {
       } else {
         model.set('trainingStatus', 'QUEUED');
         yield model.save()
-        yield messages.sendMessage('train', model.get('id'));
+        yield messages.sendMessage('train', model.get('key'));
         return res.status(200).send().end();
       }
     })

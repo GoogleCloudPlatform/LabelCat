@@ -17,20 +17,14 @@
 let GitHubStrategy = require('passport-github').Strategy;
 let passport = require('passport');
 
-module.exports = function (request, config, dataset) {
+module.exports = function (config, dataset, User) {
 
   passport.serializeUser(function (user, done) {
-    done(null, user.data);
+    done(null, user.toJSON());
   });
 
   passport.deserializeUser(function (user, done) {
-    done(null, {
-      key: {
-        namespace: undefined,
-        path: ['User', user.id]
-      },
-      data: user
-    });
+    done(null, new User(user));
   });
 
   // Use the GitHubStrategy within Passport.
@@ -42,19 +36,13 @@ module.exports = function (request, config, dataset) {
     clientSecret: config.github.clientSecret,
     callbackURL: config.github.redirectUrl
   }, function (accessToken, refreshToken, profile, done) {
-    return dataset.saveAsync({
-      key: dataset.key(['User', profile.id]),
-      data: {
-        id: profile._json.id,
-        login: profile._json.login,
-        avatar_url: profile._json.avatar_url,
-        repos_url: profile._json.repos_url,
-        organizations_url: profile._json.organizations_url,
-        access_token: accessToken
-      }
-    }).then(function () {
-      return dataset.getAsync(dataset.key(['User', profile.id]));
-    }).then(function (user) {
+    let user = new User({
+      id: profile._json.id,
+      login: profile._json.login,
+      avatar_url: profile._json.avatar_url,
+      access_token: accessToken
+    });
+    return user.save().then(function (user) {
       done(null, user);
     }).catch(done);
   }));

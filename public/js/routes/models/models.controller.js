@@ -11,11 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope, $location, $window, $log, $route, Repo, Model, ToastService) {
+angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $interval, $scope, $location, $window, $log, $route, Repo, Model, ToastService) {
   var Ctrl = this;
   var login = $route.current.params.login;
-  var id = $route.current.params.id;
+  var key = $route.current.params.key;
   var user = $route.current.locals.user;
+  var intervalPromise;
 
   /** 
    * Select a particular model for viewing.
@@ -25,7 +26,7 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
   Ctrl.viewModel = function (model) {
     $rootScope.suppressModelsLoad = true;
     Ctrl.entity.models = Ctrl.models;
-    $location.path('/' + login + '/models/' + model.id);
+    $location.path('/' + login + '/models/' + model.key);
   };
 
   /**
@@ -42,12 +43,12 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
   Ctrl.newModel = function () {
     $rootScope.suppressModelsLoad = true;
     Ctrl.entity.models = Ctrl.models;
-    if (Ctrl.models.length && Ctrl.models[Ctrl.models.length - 1].id === 'new') {
+    if (Ctrl.models.length && Ctrl.models[Ctrl.models.length - 1].key === 'new') {
       $location.path('/' + login + '/models/new');
     } else {
-      Ctrl.models.push({ id: 'new' });
+      Ctrl.models.push({ key: 'new' });
       Ctrl.model = Ctrl.models[Ctrl.models.length - 1];
-      $location.path('/' + login + '/models/' + Ctrl.model.id);
+      $location.path('/' + login + '/models/' + Ctrl.model.key);
     }
   };
 
@@ -78,7 +79,7 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
         if (!existingRepos.length) {
           Ctrl.repoToAdd = '';
           model.repos.push(repo);
-          return Model.updateOneById(model.id, {
+          return Model.updateOneById(model.key, {
             repos: model.repos
           }).then(function () {
             ToastService.success('Successfully added repo.');
@@ -108,22 +109,25 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
       return;
     }
     Ctrl.processing = true;
+    var isNew = false;
     var payload = {
       name: model.name,
       label: model.label,
-      ownerId: Ctrl.entity.id
+      ownerId: Ctrl.entity.id,
+      ownerLogin: Ctrl.entity.login
     };
     var promise;
-    if (model.id === 'new') {
+    if (model.key === 'new') {
       promise = Model.createOne(payload);
     } else {
-      promise = Model.updateOneById(model.id, payload);
+      promise = Model.updateOneById(model.key, payload);
     }
     return promise.then(function (_model) {
+      isNew = model.key === 'new';
       ToastService.success('Successfully saved model.');
       angular.extend(model, _model);
-      if (model.id === 'new') {
-        $location.path('/' + login + '/models/' + _model.id).replace;
+      if (isNew) {
+        $location.path('/' + login + '/models/' + _model.key).replace();
       }
     }).catch(function (err) {
       $log.error(err);
@@ -141,10 +145,11 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
   Ctrl.destroy = function (model) {
     if ($window.confirm('Are you sure you want to delete "' + model.name + '"?')) {
       Ctrl.loading = true;
-      return Model.destroyOneById(model.id).then(function () {
+      return Model.destroyOneById(model.key).then(function () {
         Ctrl.models.splice(Ctrl.models.indexOf(model), 1);
         Ctrl.model = null;
         ToastService.success('Successfully deleted model.');
+        $location.path('/' + login + '/models').replace();
       }).catch(function (err) {
         $log.error(err);
         ToastService.error('Failed to delete model!');
@@ -161,7 +166,7 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
    */
   Ctrl.train = function (model) {
     Ctrl.processing = true;
-    return Model.train(model.id).then(function () {
+    return Model.train(model.key).then(function () {
       model.trainingStatus = 'QUEUED';
       ToastService.success('Successfully triggered training of model.');
     }).catch(function (err) {
@@ -188,7 +193,7 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
     });
 
     Ctrl.processing = true;
-    return Model.updateOneById(Ctrl.model.id, {
+    return Model.updateOneById(Ctrl.model.key, {
       repos: Ctrl.model.repos
     }).then(function () {
       ToastService.success('Successfully removed ' + repo.name);
@@ -213,29 +218,40 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
 
   function loadModel() {
     // Check if also viewing individual model
-    if (id) {
+    if (key) {
       Ctrl.models.forEach(function (model) {
-        if (model.id == id) {
+        if (model.key == key) {
           Ctrl.model = model;
         }
       });
-      if (id === 'new' && !Ctrl.model) {
-        Ctrl.models.push({ id: 'new', name: 'new-model' });
+      if (key === 'new' && !Ctrl.model) {
+        Ctrl.models.push({ key: 'new', name: 'new-model' });
         Ctrl.model = Ctrl.models[Ctrl.models.length - 1];
       }
       if (!Ctrl.model) {
         // Model not found
         $location.path('/404').replace();
-      } else if (id !== 'new') {
+      } else if (key !== 'new') {
         // Retrieve model details
         Ctrl.loadingModel = true;
-        Model.findOneById(Ctrl.model.id).then(function (model) {
+        Model.findOneById(Ctrl.model.key).then(function (model) {
           angular.extend(Ctrl.model, model);
           var name = model.name;
           var label = model.label;
           $scope.$watch('Ctrl.model', function (_model) {
-            Ctrl.hasChanges = _model.name !== name || _model.label !== label;
+            if (!_model) {
+              Ctrl.hasChanges = false;
+            } else {
+              Ctrl.hasChanges = _model.name !== name || _model.label !== label;
+            }
           }, true);
+          intervalPromise = $interval(function () {
+            if (Ctrl.model && Ctrl.model.key && Ctrl.model.key !== 'NEW' && Ctrl.model.trainingStatus !== 'DONE') {
+              Model.findOneById(Ctrl.model.key).then(function (_model) {
+                angular.extend(Ctrl.model, _model);
+              });
+            }
+          }, 10000);
         }).catch(function () {
           ToastService.error('Failed to fetch updates for model!');
         }).finally(function () {
@@ -245,6 +261,13 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
     }
   }
 
+  $scope.$on('$destroy', function () {
+    if (intervalPromise) {
+      $interval.cancel(intervalPromise);
+      intervalPromise = null;
+    }
+  });
+
   if ($rootScope.suppressModelsLoad) {
     $rootScope.suppressModelsLoad = false;
     Ctrl.models = Ctrl.entity.models;
@@ -253,7 +276,7 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $scope
     $rootScope.loading = true;
     // Load models for entity
     Model.findAll({
-      ownerId: Ctrl.entity.id
+      ownerLogin: Ctrl.entity.login
     }).then(function (models) {
       Ctrl.models = models;
 

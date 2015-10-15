@@ -17,7 +17,7 @@
 let faker = require('faker/locale/en_US');
 let prefix = 'https://api.github.com';
 
-function generateUserRepos(owner, id, type) {
+function generateUserRepos(owner, id, key, type) {
   let num = Math.ceil(Math.random() * 10);
   let repos = [];
 
@@ -25,8 +25,11 @@ function generateUserRepos(owner, id, type) {
     let name = faker.lorem.words().join('');
     repos.push({
       id: Math.ceil(Math.random() * 100000),
+      key: '' + (Math.ceil(Math.random() * 100000)) + '-' + (Math.ceil(Math.random() * 100000)),
       name,
       full_name: `${owner}/${name}`,
+      userLogin: owner,
+      userKey: key,
       owner: {
         login: owner,
         id,
@@ -119,9 +122,9 @@ function generateUserRepos(owner, id, type) {
 module.exports = function (sinon) {
   return {
     create: function () {
-      let userRepos = generateUserRepos('alice', 1234, 'User')
-                        .concat(generateUserRepos('foo', 3333, 'Organization'))
-                        .concat(generateUserRepos('bar', 7777, 'Organization'));
+      let userRepos = generateUserRepos('alice', 1234, '11-22-33-44', 'User')
+                        .concat(generateUserRepos('foo', 3333, '33-33-33-33', 'Organization'))
+                        .concat(generateUserRepos('bar', 7777, '77-77-77-77', 'Organization'));
 
       return {
         userRepos,

@@ -44,7 +44,7 @@ limitations under the License. -->
           <span>{{user.login}}</span>
         </h2>
       </li>
-      <li ng-repeat="org in user.orgs track by org.id" class="parent-list-item" ng-click="view(org)" ng-class="{active: partOne === org.login}">
+      <li ng-repeat="org in user.orgs track by org.login" class="parent-list-item" ng-click="view(org)" ng-class="{active: partOne === org.login}">
         <h2 class="menu-heading md-subhead">
           <img ng-src="{{org.avatar_url}}?{{$index}}" class="md-avatar" alt="{{org.login}}" />
           <span>{{org.login}}</span>

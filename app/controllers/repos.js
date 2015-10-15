@@ -16,9 +16,11 @@
 
 let crypto = require('crypto');
 
-module.exports = function (dataset, prediction, config, github, Promise, container, Repo, logger, messages) {
+module.exports = function (prediction, config, Promise, container, logger, messages) {
 
+  let Repo = container.get('Repo');
   let Model = container.get('Model');
+  let User = container.get('User');
 
   let receivedHooks = [];
 
@@ -28,29 +30,38 @@ module.exports = function (dataset, prediction, config, github, Promise, contain
 
   return {
     /**
-     * GET /api/repos/:id
+     * GET /api/repos/:key
      *
-     * Retrieve a repo by id.
+     * Retrieve a repo by key.
      */
-    findOneById: Promise.coroutine(function* (req, res) {
-      let results = yield Promise.all([
-        github.findRepoById(req.user.data, req.params.id),
-        Repo.findOneById(req.params.id)
-      ]);
+    findOne: Promise.coroutine(function* (req, res) {
+      let repo = yield Repo.findOne(req.params.key);
 
-      // Array destructuring doesn't work yet
-      let githubRepo = results[0];
-      let datastoreRepo = results[1];
-
-      // TODO: Check to make sure GitHub returned a repo
-
-      if (!datastoreRepo) {
-        return res.status(200).json(Repo.serializeRepo(githubRepo)).end();
+      if (!repo) {
+        return res.status(200).end();
       } else {
-        let models = yield Model.getAll(datastoreRepo.get('modelIds') || []);
-        datastoreRepo.set('models', models);
-        return res.status(200).json(Repo.serializeRepo(datastoreRepo.toJSON())).end();
+        let models = yield Model.getAll(repo.get('modelKeys') || []);
+        repo.set('models', models);
+        return res.status(200).json(repo.toJSON()).end();
       }
+    }),
+
+    /**
+     * GET /api/repos
+     *
+     * Retrieve a collection of repos.
+     */
+    findAll: Promise.coroutine(function* (req, res) {
+      let repos = yield Repo.findAll(req.params);
+      let models = yield Promise.all(repos.map(function (repo) {
+        return Model.getAll(repo.get('modelKeys') || []);
+      }));
+      repos.forEach(function (repo, i) {
+        repo.set('models', models[i]);
+      })
+      return res.status(200).json(repos.map(function (repo) {
+        return repo.toJSON();
+      })).end();
     }),
 
     /**
@@ -59,7 +70,8 @@ module.exports = function (dataset, prediction, config, github, Promise, contain
      * Search for a GitHub repo by owner name and repo name.
      */
     search: Promise.coroutine(function* (req, res) {
-      let repo = github.searchForRepo(req.user.data, req.params.owner, req.params.repo);
+      let github = container.get('github');
+      let repo = yield github.searchForRepo(req.user, req.params.owner, req.params.repo);
       if (repo) {
         return res.status(200).json(Repo.serializeRepo(repo)).end();
       } else {
@@ -68,21 +80,26 @@ module.exports = function (dataset, prediction, config, github, Promise, contain
     }),
 
     /**
-     * PUT /api/repos/:id
+     * PUT /api/repos/:key
      *
      * Update a repo in the datastore.
      */
-    updateOneById: Promise.coroutine(function* (req, res) {
-      let repo = yield Repo.findOneById(req.params.id);
-
-      if (!repo) {
-        let githubRepo = yield github.findRepoById(req.user.data, req.params.id);
-        repo = yield Repo.createOne(Repo.serializeRepo(githubRepo));
+    updateOne: Promise.coroutine(function* (req, res) {
+      let github = container.get('github');
+      let repo;
+      if (req.params.key === 'new') {
+        let githubRepo = yield github.findRepoById(req.user, req.body.id);
+        repo = new Repo(Repo.serializeRepo(githubRepo));
+        yield repo.save();
+      } else {
+        repo = yield Repo.findOne(req.params.key);
       }
       
       if (req.body.enabled && !repo.get('enabled')) {
+        req.body.userKey = req.user.get('key');
+        req.body.userLogin = req.user.get('login');
         // repo is being enabled
-        let hook = github.findOrCreateHook(repo.toJSON(), req.user.data);
+        let hook = yield github.findOrCreateHook(repo.toJSON(), req.user);
         if (hook instanceof Error) {
           // temporarily ignore this
           // throw new Error('Repo missing or need access!');
@@ -94,44 +111,44 @@ module.exports = function (dataset, prediction, config, github, Promise, contain
         }
       } else if (req.body.enabled === false && repo.get('hookId')) {
         // repo is being disabled, remove the hook
-        yield github.deleteHook(repo.toJSON(), req.user.data);
+        yield github.deleteHook(repo.toJSON(), req.user);
         req.body.hookId = 0;
       }
 
-      repo.set('userId', req.user.data.id);
       repo.set(req.body);
       yield repo.save();
       return res.status(200).json(repo.toJSON()).end();
     }),
 
     /**
-     * DELETE /api/repos/:id
+     * DELETE /api/repos/:key
      *
-     * Delete a repo by id from the datastore.
+     * Remove a repo from the datastore.
      */
-    destroyOneById: Promise.coroutine(function* (req, res) {
-      yield Repo.destroyOneById(req.params.id);
+    destroyOne: Promise.coroutine(function* (req, res) {
+      yield Repo.destroyOne(req.params.key);
       return res.status(204).end();
     }),
 
     /**
-     * POST /api/repos/:id/hook
+     * POST /api/repos/:key/hook
      *
      * GitHub posts to this endpoint whenever a webhook is triggered.
      */
     hook: Promise.coroutine(function* (req, res, next) {
-      logger.info('received hook', req.params.id);
+      let github = container.get('github');
+      logger.info('received hook', req.params.key);
       // Verify GitHub's signature
       if (req.headers['x-hub-signature'] !== signBlob(config.github.webhookSecret, JSON.stringify(req.body))) {
         return res.status(403).end();
       } else if (req.body.action === 'opened' && req.body.issue) {
-        let repo = yield Repo.findOneById(req.params.id);
-        if (repo && repo.get('modelIds') && repo.get('modelIds').length) {
-          let user = dataset.getAsync(dataset.key(['User', '' + repo.get('userId')]));
-          let models = yield Model.getAll(repo.get('modelIds'));
+        let repo = yield Repo.findOne(req.params.key);
+        if (repo && repo.get('modelKeys') && repo.get('modelKeys').length) {
+          let user = yield User.findOne(repo.get('userKey'));
+          let models = yield Model.getAll(repo.get('modelKeys'));
           let example = prediction.createExample(req.body.issue);
           let results = yield Promise.all(models.map(Promise.coroutine(function* (model) {
-            let results = yield prediction.predict(model.get('id'), example);
+            let results = yield prediction.predict(model.get('key'), example);
             
             // Array destructuring doesn't work yet
             let output = results[0];

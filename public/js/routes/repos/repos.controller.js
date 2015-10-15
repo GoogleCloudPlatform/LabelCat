@@ -14,7 +14,7 @@
 angular.module('labelcat').controller('ReposCtrl', function ($log, $location, $timeout, $http, $route, $rootScope, Repo, Model, UserService, ToastService) {
   var Ctrl = this;
   var login = $route.current.params.login;
-  var id = $route.current.params.id ? parseInt($route.current.params.id, 10) : null;
+  var name = $route.current.params.name;
   var user = $route.current.locals.user;
 
   /**
@@ -23,7 +23,7 @@ angular.module('labelcat').controller('ReposCtrl', function ($log, $location, $t
    * @params {object} repo - The repo to select.
    */
   Ctrl.viewRepo = function (repo) {
-    $location.path('/' + login + '/repos/' + repo.id);
+    $location.path('/' + login + '/repos/' + repo.name);
   };
 
   /**
@@ -32,8 +32,9 @@ angular.module('labelcat').controller('ReposCtrl', function ($log, $location, $t
    * @params {object} repo - The repo to enable.
    */
   Ctrl.enableRepo = function (repo) {
-    return Repo.updateOneById(repo.id, {
-      enabled: !!repo.enabled
+    return Repo.updateOneById(repo.key || 'new', {
+      enabled: !!repo.enabled,
+      id: repo.id
     }).then(function (_repo) {
       angular.extend(repo, _repo);
       ToastService.success('Successfully saved repo!');
@@ -56,14 +57,14 @@ angular.module('labelcat').controller('ReposCtrl', function ($log, $location, $t
    */
   Ctrl.addModel = function (repo, id) {
     return Model.findOneById(id).then(function (model) {
-      if (!repo.modelIds) {
-        repo.modelIds = [];
+      if (!repo.modelKeys) {
+        repo.modelKeys = [];
       }
-      if (repo.modelIds.indexOf(id) === -1) {
-        repo.modelIds.push(id);
+      if (repo.modelKeys.indexOf(id) === -1) {
+        repo.modelKeys.push(id);
         Ctrl.adding = true;
-        return Repo.updateOneById(repo.id, {
-          modelIds: repo.modelIds
+        return Repo.updateOneById(repo.key, {
+          modelKeys: repo.modelKeys
         }).then(function () {
           Ctrl.modelId = '';
           repo.models = repo.models || [];
@@ -92,17 +93,17 @@ angular.module('labelcat').controller('ReposCtrl', function ($log, $location, $t
     if (!Ctrl.repo) {
       return;
     }
-    Ctrl.repo.modelIds = Ctrl.repo.modelIds || [];
+    Ctrl.repo.modelKeys = Ctrl.repo.modelKeys || [];
     Ctrl.processing = true;
-    Ctrl.repo.modelIds = Ctrl.repo.modelIds.filter(function (id) {
-      return id != model.id;
+    Ctrl.repo.modelKeys = Ctrl.repo.modelKeys.filter(function (key) {
+      return key != model.key;
     });
-    return Repo.updateOneById(Ctrl.repo.id, {
-      modelIds: Ctrl.repo.modelIds
+    return Repo.updateOneById(Ctrl.repo.key, {
+      modelKeys: Ctrl.repo.modelKeys
     }).then(function () {
       if (Ctrl.repo && Ctrl.repo.models) {
         Ctrl.repo.models = Ctrl.repo.models.filter(function (_model) {
-          return _model.id != model.id;
+          return _model.key != model.key;
         });
       } 
       ToastService.success('Successfully removed ' + model.name);
@@ -126,9 +127,9 @@ angular.module('labelcat').controller('ReposCtrl', function ($log, $location, $t
   }
 
   // Check if also viewing individual repo
-  if (id) {
+  if (name) {
     Ctrl.entity.repos.forEach(function (repo) {
-      if (repo.id === id) {
+      if (repo.name === name) {
         Ctrl.repo = repo;
       }
     });
@@ -138,8 +139,12 @@ angular.module('labelcat').controller('ReposCtrl', function ($log, $location, $t
     } else {
       // Retrieve repo details
       Ctrl.loadingRepo = true;
-      Repo.findOneById(Ctrl.repo.id).then(function (repo) {
-        angular.extend(Ctrl.repo, repo);
+      Repo.findAll({
+        full_name: Ctrl.repo.full_name
+      }).then(function (repos) {
+        if (repos.length) {
+          angular.extend(Ctrl.repo, repos[0]);
+        }
       }).catch(function () {
         ToastService.error('Failed to fetch updates for repo!');
       }).finally(function () {
