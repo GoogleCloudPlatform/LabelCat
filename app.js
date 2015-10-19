@@ -49,6 +49,11 @@ exports.createServer = function () {
       signed: true
     }));
 
+    // Receiving a GitHub webhook on issue creation
+    // We mount this route here because the csurf middleware would prevent it
+    // from working otherwise.
+    app.post('/api/repos/:key/hook', utils.makeSafe(repos.hook));
+
     // Cross-site Request Forgery protection.
     // A csrf token will automatically be stored in the user's cookie session.
     app.use(csurf());
@@ -102,9 +107,6 @@ exports.createServer = function () {
       .put(ensureAuthenticated, utils.makeSafe(models.updateOne))
       // Delete a model
       .delete(ensureAuthenticated, utils.makeSafe(models.destroyOne));
-
-    // Receiving a GitHub webhook on issue creation
-    app.post('/api/repos/:key/hook', utils.makeSafe(repos.hook));
 
     // Search GitHub for a repo with the specified owner and name    
     app.get('/api/repos/search/:owner/:repo', ensureAuthenticated, utils.makeSafe(repos.search))

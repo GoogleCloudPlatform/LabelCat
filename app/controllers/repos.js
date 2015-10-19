@@ -166,7 +166,7 @@ module.exports = function (prediction, config, Promise, container, logger, messa
             return result.label;
           });
           if (labelsToAdd.length) {
-            yield github.addLabelsToIssue(labelsToAdd, req.body.issue.number, repo.toJSON(), user.data);
+            yield github.addLabelsToIssue(labelsToAdd, req.body.issue.number, repo.toJSON(), user);
             return res.status(200).json(results).end();
           } else {
             return res.status(200).json(results).end();
