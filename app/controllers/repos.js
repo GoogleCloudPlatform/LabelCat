@@ -16,11 +16,7 @@
 
 let crypto = require('crypto');
 
-module.exports = function (prediction, config, Promise, container, logger, messages) {
-
-  let Repo = container.get('Repo');
-  let Model = container.get('Model');
-  let User = container.get('User');
+module.exports = function (prediction, config, Promise, container, logger, messages, Repo, Model, User) {
 
   let receivedHooks = [];
 

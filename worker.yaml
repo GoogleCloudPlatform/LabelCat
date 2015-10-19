@@ -17,6 +17,11 @@ vm: true
 api_version: 1
 module: worker
 
+handlers:
+  - url: .*
+    script: None
+    secure: always
+
 resources:
   cpu: .5
   memory_gb: 1.3

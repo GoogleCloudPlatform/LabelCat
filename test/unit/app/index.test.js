@@ -14,7 +14,7 @@
 
 'use strict';
 
-describe('Integration Tests', function () {
+describe('Unit Tests', function () {
   let container = require('./container');
   let assert = container.get('assert');
   let Promise = container.get('Promise');
@@ -22,11 +22,6 @@ describe('Integration Tests', function () {
   beforeEach(function () {
     // Reset mocks and test data
     container.get('bootstrap')();
-
-    // Create a new instance of our Express app
-    container.register('app', function () {
-      return container.get('createServer')();
-    });
   });
 
   /**
@@ -46,11 +41,11 @@ describe('Integration Tests', function () {
   // Here is our entire integration test suite
   describe('Web API', function () {
     describe('User Controller', function () {
-      describe('GET /api/user', test('user', 'user'));
-      describe('GET /api/user/repos', test('user', 'repos'));
+      describe('user.user', test('user', 'user'));
+      describe('user.repos', test('user', 'repos'));
     });
     describe('Repos Controller', function () {
-      describe('GET /api/repos/:key', test('repos', 'findOne'));
+      describe('repos.findOne', test('repos', 'findOne'));
     });
   });
 });

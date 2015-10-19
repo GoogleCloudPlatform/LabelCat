@@ -14,7 +14,9 @@
   "scripts": {
     "start": "node --harmony ${SCRIPT:-app.js}",
     "monitor": "nodemon --harmony ${SCRIPT:-app.js}",
-    "test": "node --harmony node_modules/mocha/bin/mocha test/**/index.test.js",
+    "unit": "node --harmony node_modules/mocha/bin/mocha test/unit/app/index.test.js",
+    "integration": "node --harmony node_modules/mocha/bin/mocha test/integration/app/index.test.js",
+    "test": "npm run unit && npm run integration",
     "deploy": "gcloud preview app deploy app.yaml worker.yaml --version alpha-001 --promote"
   },
   "dependencies": {

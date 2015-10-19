@@ -14,8 +14,12 @@
 
 'use strict';
 
-module.exports = function (config, dataset, Promise) {
+module.exports = function (config, Promise, container) {
   
+  function ds() {
+    return container.get('dataset');
+  }
+
   class Base {
     constructor(key, data, kind) {
       this.key = key;
@@ -64,8 +68,8 @@ module.exports = function (config, dataset, Promise) {
      * Save this entity in its current state to the datastore.
      */
     save() {
-      return dataset.saveAsync({
-        key: dataset.key({
+      return ds().saveAsync({
+        key: ds().key({
           namespace: config.gcloud.namespace,
           path: [this.kind, this.key]
         }),
@@ -87,7 +91,7 @@ module.exports = function (config, dataset, Promise) {
         return Promise.reject(new Error('You must provide a key!'));
       } else {
         let Constructor = this;
-        return dataset.getAsync(dataset.key({
+        return ds().getAsync(ds().key({
           namespace: config.gcloud.namespace,
           path: [this.name, key]
         })).then(function (instance) {
@@ -104,7 +108,7 @@ module.exports = function (config, dataset, Promise) {
     static findAll(params) {
       params = params || {};
       let Constructor = this;
-      let query = dataset.createQuery(config.gcloud.namespace, Constructor.name);
+      let query = ds().createQuery(config.gcloud.namespace, Constructor.name);
       if (params.modelId) {
         query = query.filter('modelId =', parseInt(params.modelId, 10));
       }
@@ -119,7 +123,7 @@ module.exports = function (config, dataset, Promise) {
       }
       query = query.limit(1000).start(0);
 
-      return dataset.runQueryAsync(query).spread(function (entities) {
+      return ds().runQueryAsync(query).spread(function (entities) {
         return entities.map(function (entity) {
           return new Constructor(entity.data);
         });
@@ -146,7 +150,7 @@ module.exports = function (config, dataset, Promise) {
       if (!key || typeof key !== 'string') {
         return Promise.reject(new Error('You must provide a key!'));
       } else {
-        return dataset.deleteAsync(dataset.key({
+        return ds().deleteAsync(ds().key({
           namespace: config.gcloud.namespace,
           path: [this.name, key]
         }));
@@ -160,8 +164,8 @@ module.exports = function (config, dataset, Promise) {
      */
     static destroyAll(params) {
       return this.findAll(params).then(entities => {
-        return dataset.deleteAsync(entities.map(entity => {
-          return dataset.key({
+        return ds().deleteAsync(entities.map(entity => {
+          return ds().key({
             namespace: config.gcloud.namespace,
             path: [this.name, entity.key]
           });

@@ -14,19 +14,14 @@
 
 'use strict';
 
-module.exports = function (sinon, dataFaker) {
+module.exports = function (sinon) {
   return {
     create() {
-      let userRepos = dataFaker.generateGitHubRepos('alice', 1234, '11-22-33-44', 'User')
-                        .concat(dataFaker.generateGitHubRepos('foo', 3333, '33-33-33-33', 'Organization'))
-                        .concat(dataFaker.generateGitHubRepos('bar', 7777, '77-77-77-77', 'Organization'));
-
       return {
-        userRepos,
-        authenticate: sinon.stub(),
-        repos: {
-          getAll: sinon.stub().callsArgWithAsync(1, null, userRepos)
-        }
+        status: sinon.stub().returnsThis(),
+        json: sinon.stub().returnsThis(),
+        end: sinon.stub().returnsThis(),
+        send: sinon.stub().returnsThis()
       };
     }
   };

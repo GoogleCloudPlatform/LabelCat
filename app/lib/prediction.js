@@ -14,7 +14,7 @@
 
 'use strict';
 
-module.exports = function (jwtClient, Promise, config, trainedModelsApi) {
+module.exports = function (jwtClient, Promise, config, container) {
 
   /**
    * Authorize and execute the specified Prediction API method.
@@ -29,7 +29,7 @@ module.exports = function (jwtClient, Promise, config, trainedModelsApi) {
     return jwtClient.authorizeAsync().then(function () {
       params.auth = jwtClient;
       params.project = config.gcloud.projectId;
-      return trainedModelsApi[`${method}Async`](params);
+      return container.get('trainedModelsApi')[`${method}Async`](params);
     });
   }
 

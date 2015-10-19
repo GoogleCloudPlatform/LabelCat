@@ -83,7 +83,7 @@ limitations under the License. -->
               </div>
             </md-content>
           </md-list-item>
-          <md-list-item class="md-3-line model-item layout-row" ng-repeat="model in Ctrl.repo.models track by model.id" layout="row">
+          <md-list-item class="md-3-line model-item layout-row" ng-repeat="model in Ctrl.repo.models track by model.key" layout="row">
             <span style="margin: 27px 20px 0 0;">
               <md-tooltip>Training Status: {{ model.trainingStatus }}</md-tooltip>
               <md-icon md-font-set="material-icons">

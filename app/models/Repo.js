@@ -35,7 +35,13 @@ module.exports = function (Base) {
      */
     static serializeRepo(repo) {
       if (typeof repo.toJSON === 'function') {
-        return repo.toJSON();
+        let _repo = repo.toJSON();
+        if (_repo.models && _repo.models.length) {
+          _repo.models = _repo.models.map(function (model) {
+            return typeof model.toJSON === 'function' ? model.toJSON() : model;
+          });
+        }
+        return _repo;
       } else if (repo.data && repo.key) {
         repo = repo.data;
       }
