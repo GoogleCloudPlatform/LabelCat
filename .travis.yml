@@ -6,3 +6,6 @@ node_js:
 cache:
   directories:
   - node_modules
+
+after_install:
+  - cp config.default.js config.js
