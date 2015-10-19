@@ -1,4 +1,4 @@
-# LabelCat
+# LabelCat [![Build Status](https://travis-ci.org/GoogleCloudPlatform/LabelCat.svg)](https://travis-ci.org/GoogleCloudPlatform/LabelCat)
 
 _Disclaimer: This is not an official Google product._
 
@@ -91,7 +91,7 @@ key file
 ## Deployment
 
 1. Install the [Google Cloud SDK][2]
-1. `gcloud preview app deploy app.yaml worker.yaml --set-default`
+1. `gcloud preview app deploy app.yaml worker.yaml --promote`
 
 ## Contributing
 
