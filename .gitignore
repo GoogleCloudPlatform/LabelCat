@@ -3,3 +3,4 @@ node_modules/
 key.json
 npm-debug.log
 config.js
+coverage/

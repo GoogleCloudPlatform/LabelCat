@@ -14,9 +14,12 @@
   "scripts": {
     "start": "node --harmony ${SCRIPT:-app.js}",
     "monitor": "nodemon --harmony ${SCRIPT:-app.js}",
-    "unit": "node --harmony node_modules/mocha/bin/mocha test/unit/app/index.test.js",
+    "unit": "node --harmony node_modules/mocha/bin/mocha test/unit/app/index.test.js -R json-cov",
+    "unit-cover": "node --harmony node_modules/istanbul-harmony/lib/cli.js cover --hook-run-in-context node_modules/mocha/bin/_mocha -- test/unit/app/index.test.js --R spec",
     "integration": "node --harmony node_modules/mocha/bin/mocha test/integration/app/index.test.js",
+    "integration-cover": "node --harmony node_modules/istanbul-harmony/lib/cli.js cover --hook-run-in-context node_modules/mocha/bin/_mocha -- test/integration/app/index.test.js --R spec",
     "test": "npm run unit && npm run integration",
+    "cover": "npm run unit-cover && npm run integration-cover",
     "deploy": "gcloud preview app deploy app.yaml worker.yaml --version alpha-001 --promote"
   },
   "dependencies": {
@@ -30,7 +33,7 @@
     "gcloud": "0.23.0",
     "github": "0.2.4",
     "googleapis": "2.1.5",
-    "node-uuid": "^1.4.3",
+    "node-uuid": "1.4.3",
     "passport": "0.3.0",
     "passport-github": "1.0.0",
     "request": "2.64.0",
@@ -39,6 +42,7 @@
   "devDependencies": {
     "chai": "3.3.0",
     "faker": "3.0.1",
+    "istanbul-harmony": "0.3.16",
     "keygrip": "1.0.1",
     "mocha": "2.3.3",
     "sinon": "1.17.1",
