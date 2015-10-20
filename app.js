@@ -88,17 +88,17 @@ exports.createServer = function () {
 
     // Return the currently authenticated user, if any
     app.get('/api/user', utils.makeSafe(user.user));
-    // Return the accessible repos of the currently authenticated user, if any
+    // Return the repos accessible by the currently authenticated user, if any
     app.get('/api/user/repos', ensureAuthenticated, utils.makeSafe(user.repos));
 
     // Trigger training for the specified model
     app.post('/api/models/:key/train', ensureAuthenticated, utils.makeSafe(models.trainOne));
 
     app.route('/api/models')
-    // Return a collection of models
-    .get(ensureAuthenticated, utils.makeSafe(models.findAll))
-    // Create a new model
-    .post(ensureAuthenticated, utils.makeSafe(models.createOne));
+      // Return a collection of models
+      .get(ensureAuthenticated, utils.makeSafe(models.findAll))
+      // Create a new model
+      .post(ensureAuthenticated, utils.makeSafe(models.createOne));
 
     app.route('/api/models/:key')
       // Return a model
@@ -108,8 +108,10 @@ exports.createServer = function () {
       // Delete a model
       .delete(ensureAuthenticated, utils.makeSafe(models.destroyOne));
 
+    // [START repo_endpoints]
     // Search GitHub for a repo with the specified owner and name    
-    app.get('/api/repos/search/:owner/:repo', ensureAuthenticated, utils.makeSafe(repos.search))
+    app.get('/api/repos/search/:owner/:repo', ensureAuthenticated, utils.makeSafe(repos.search));
+
     app.route('/api/repos/:key')
       // Return a repo
       .get(ensureAuthenticated, utils.makeSafe(repos.findOne))
@@ -117,11 +119,15 @@ exports.createServer = function () {
       .put(ensureAuthenticated, utils.makeSafe(repos.updateOne))
       // Delete a repo
       .delete(ensureAuthenticated, utils.makeSafe(repos.destroyOne));
+
     app.route('/api/repos')
       // Return a repo
       .get(ensureAuthenticated, utils.makeSafe(repos.findAll));
+    // [END repo_endpoints]
 
-    // Catch any other unknown requests by rendering the home page
+    // [START middleware]
+    // Catch any other unknown requests by rendering the home page, where
+    // Angular will take care of the rest.
     app.get('*', function (req, res, next) {
       return res.sendFile('index.html', {
         root: './public/'
@@ -135,6 +141,7 @@ exports.createServer = function () {
 
     // Catch all handler, assumes error
     app.use(errorHandler);
+    // [end middleware]
 
     return app;
   });
@@ -146,8 +153,10 @@ exports.createServer = function () {
 if (module === require.main) {
   var config = container.get('config');
   var app = exports.createServer();
+  // [START server]
   var server = http.createServer(app).listen(config.port, config.host, function () {
     console.log(`App listening at http://${server.address().address}:${server.address().port}`);
     console.log('Press Ctrl+C to quit.');
   });
+  // [END server]
 }

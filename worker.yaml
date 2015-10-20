@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# [START worker_yaml]
 runtime: nodejs
 vm: true
 api_version: 1
 module: worker
 
+# Force https for all requests
 handlers:
   - url: .*
     script: None
@@ -33,6 +35,7 @@ automatic_scaling:
   cool_down_period_sec: 60
   cpu_utilization:
     target_utilization: 0.75
+# [END worker_yaml]
 
 env_variables:
   SCRIPT: worker.js

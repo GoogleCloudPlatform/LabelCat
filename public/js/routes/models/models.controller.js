@@ -109,7 +109,7 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $inter
       return;
     }
     Ctrl.processing = true;
-    var isNew = false;
+    var isNew = model.key === 'new';
     var payload = {
       name: model.name,
       label: model.label,
@@ -117,13 +117,12 @@ angular.module('labelcat').controller('ModelsCtrl', function ($rootScope, $inter
       ownerLogin: Ctrl.entity.login
     };
     var promise;
-    if (model.key === 'new') {
+    if (isNew) {
       promise = Model.createOne(payload);
     } else {
       promise = Model.updateOneById(model.key, payload);
     }
     return promise.then(function (_model) {
-      isNew = model.key === 'new';
       ToastService.success('Successfully saved model.');
       angular.extend(model, _model);
       if (isNew) {
