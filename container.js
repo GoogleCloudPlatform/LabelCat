@@ -23,7 +23,17 @@ let google = require('googleapis');
 
 let key;
 try {
-  key = require(config.gcloud.keyFile);
+  if (process.env.NODE_ENV === 'test') {
+    key = {
+      private_key_id: '',
+      private_key: '',
+      client_email: '',
+      client_id: '',
+      type: 'service_account'
+    };
+  } else {
+    key = require(config.gcloud.keyFile);
+  }
 } catch (err) {
   console.error(`Could not read key file! Did you download one from https://console.developers.google.com/project/${config.gcloud.projectId}/apiui/credential ?`);
   throw err;
