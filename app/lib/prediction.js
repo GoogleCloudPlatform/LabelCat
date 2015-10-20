@@ -14,7 +14,7 @@
 
 'use strict';
 
-module.exports = function (jwtClient, Promise, config, container) {
+module.exports = function (Promise, config, container) {
 
   /**
    * Authorize and execute the specified Prediction API method.
@@ -26,6 +26,7 @@ module.exports = function (jwtClient, Promise, config, container) {
    */
   function execute(method, params) {
     // TODO: Does this authorization need to be done on every call?
+    let jwtClient = container.get('jwtClient');
     return jwtClient.authorizeAsync().then(function () {
       params.auth = jwtClient;
       params.project = config.gcloud.projectId;

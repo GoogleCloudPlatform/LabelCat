@@ -92,7 +92,7 @@ module.exports = function (container, assert, testRequest, Promise, createSessio
       }, 'dataset.getAsync should have been called with the correct key');
     }));
 
-    it('Should return 200 and the repo and the repo\s models', Promise.coroutine(function* () {
+    it('Should return 200 and the repo and the models of the repo', Promise.coroutine(function* () {
       let fakeModel = {
         key: '24-24-24-24',
         outputFeature: 'foo',
@@ -129,6 +129,7 @@ module.exports = function (container, assert, testRequest, Promise, createSessio
         namespace: 'LabelCat',
         path: ['Model', fakeModel.key]
       }, 'dataset.getAsync should have been called with the correct key');
+      assert.isTrue(container.get('jwtClient').authorizeAsync.calledTwice, 'jwtClient.authorizeAsync should have been called twice');
     }));
   };
 };

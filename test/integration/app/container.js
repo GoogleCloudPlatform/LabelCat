@@ -98,7 +98,7 @@ container.load(path.join(__dirname, '../../mocks'));
 
 // "bootstrap" is a function we'll run before every test to reset all of our
 // test data and mocks
-container.register('bootstrap', function (container, sinon, githubApiMock, datasetMock, trainedModelsApiMock) {
+container.register('bootstrap', function (container, sinon, githubApiMock, datasetMock, trainedModelsApiMock, Promise) {
   return function () {
     // Mock authenticated user data
     container.register('userSession', {
@@ -121,6 +121,11 @@ container.register('bootstrap', function (container, sinon, githubApiMock, datas
 
     // Mock Prediction API
     container.register('trainedModelsApi', trainedModelsApiMock.create());
+
+    // JWT Client
+    container.register('jwtClient', {
+      authorizeAsync: sinon.stub().returns(Promise.resolve())
+    })
   };
 });
 
