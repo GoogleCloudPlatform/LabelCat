@@ -8,3 +8,4 @@ cache:
 
 before_install:
   - cp config.default.js config.js
+  - echo -e '{\n  "private_key_id": "foo",\n  "private_key": "foo",\n  "client_email": "foo",\n  "client_id": "foo",\n  "type": "service_account"\n}' > keyfoo.json
