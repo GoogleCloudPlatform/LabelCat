@@ -19,7 +19,9 @@ module.exports = function (sinon) {
     create() {
       return {
         key: sinon.stub().returnsArg(0),
-        getAsync: sinon.stub()
+        getAsync: sinon.stub(),
+        createQuery: sinon.stub(),
+        runQueryAsync: sinon.stub()
       };
     }
   };

@@ -48,7 +48,7 @@ module.exports = function (prediction, config, Promise, container, logger, messa
      * Retrieve a collection of repos.
      */
     findAll: Promise.coroutine(function* (req, res) {
-      let repos = yield Repo.findAll(req.params);
+      let repos = yield Repo.findAll(req.query);
       let models = yield Promise.all(repos.map(function (repo) {
         return Model.getAll(repo.get('modelKeys') || []);
       }));

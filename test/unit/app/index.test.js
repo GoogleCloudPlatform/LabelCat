@@ -46,6 +46,7 @@ describe('Unit Tests', function () {
     });
     describe('Repos Controller', function () {
       describe('repos.findOne', test('repos', 'findOne'));
+      describe('repos.findAll', test('repos', 'findAll'));
     });
   });
 });

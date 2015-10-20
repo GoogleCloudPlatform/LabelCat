@@ -51,6 +51,7 @@ describe('Integration Tests', function () {
     });
     describe('Repos Controller', function () {
       describe('GET /api/repos/:key', test('repos', 'findOne'));
+      describe('GET /api/repos', test('repos', 'findAll'));
     });
   });
 });
