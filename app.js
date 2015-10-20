@@ -141,7 +141,7 @@ exports.createServer = function () {
 
     // Catch all handler, assumes error
     app.use(errorHandler);
-    // [end middleware]
+    // [END middleware]
 
     return app;
   });
