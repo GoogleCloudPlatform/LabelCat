@@ -38,15 +38,76 @@ describe('Unit Tests', function () {
     return container.resolve(require('./controllers/' + controller + '/' + method + '.test'));
   }
 
-  // Here is our entire integration test suite
-  describe('Web API', function () {
-    describe('User Controller', function () {
-      describe('user.user', test('user', 'user'));
-      describe('user.repos', test('user', 'repos'));
+  describe('controllers/', function () {
+    describe('user.js', function () {
+      describe('user()', test('user', 'user'));
+      describe('repos()', test('user', 'repos'));
     });
-    describe('Repos Controller', function () {
-      describe('repos.findOne', test('repos', 'findOne'));
-      describe('repos.findAll', test('repos', 'findAll'));
+    describe('repos.js', function () {
+      describe('findOne()', test('repos', 'findOne'));
+      describe('findAll()', test('repos', 'findAll'));
+      describe('search()', test('repos', 'search'));
     });
   });
+
+  describe('lib/', function () {
+    describe('github.js', function () {
+      describe('findRepoById()', () => it('write me please'));
+      describe('searchForRepo()', () => it('write me please'));
+      describe('getReposForUser()', () => it('write me please'));
+      describe('getIssuesForRepo()', () => it('write me please'));
+      describe('findOrCreateHook()', () => it('write me please'));
+      describe('deleteHook()', () => it('write me please'));
+      describe('addLabelsToIssue()', () => it('write me please'));
+    });
+    describe('messages.js', function () {
+      describe('subscribe()', () => it('write me please'));
+      describe('sendMessage()', () => it('write me please'));
+    });
+    describe('prediction.js', function () {
+      describe('analyzeModelById()', () => it('write me please'));
+      describe('getModelById()', () => it('write me please'));
+      describe('destroyModelById()', () => it('write me please'));
+      describe('trainModel()', () => it('write me please'));
+      describe('predict()', () => it('write me please'));
+      describe('createExample()', () => it('write me please'));
+      describe('createExamples()', () => it('write me please'));
+    });
+    describe('utils.js', function () {
+      describe('makeSafe()', () => it('write me please'));
+    });
+  });
+
+  describe('middleware/', function () {
+    describe('ensureAuthenticated.js', () => it('write me please'));
+    describe('errorHandler.js', () => it('write me please'));
+    describe('jsonpSecurity.js', () => it('write me please'));
+  });
+
+  describe('models/', function () {
+    describe('Base.js', function () {
+      describe('#get()', () => it('write me please'));
+      describe('#set()', () => it('write me please'));
+      describe('#toJSON()', () => it('write me please'));
+      describe('#save()', () => it('write me please'));
+      describe('findOne()', () => it('write me please'));
+      describe('findAll()', () => it('write me please'));
+      describe('findAll()', () => it('write me please'));
+      describe('getAll()', () => it('write me please'));
+      describe('destroyOne()', () => it('write me please'));
+      describe('destroyAll()', () => it('write me please'));
+    });
+    describe('Model.js', function () {
+      describe('findOne()', () => it('write me please'));
+      describe('destroyOne()', () => it('write me please'));
+      describe('trainOne()', () => it('write me please'));
+    });
+    describe('Repo.js', function () {
+      describe('serializeRepo()', () => it('write me please'));
+    });
+    describe('User.js', function () {
+      describe('safeToJSON()', () => it('write me please'));
+    });
+  });
+
 });

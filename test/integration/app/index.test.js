@@ -49,8 +49,20 @@ describe('Integration Tests', function () {
       describe('GET /api/user', test('user', 'user'));
       describe('GET /api/user/repos', test('user', 'repos'));
     });
+    describe('Models Controller', function () {
+      describe('POST /api/models/:key/train', () => it('write me please'));
+      describe('GET /api/models', () => it('write me please'));
+      describe('POST /api/models', () => it('write me please'));
+      describe('GET /api/repos/:key', () => it('write me please'));
+      describe('PUT /api/repos/:key', () => it('write me please'));
+      describe('DELETE /api/repos/:key', () => it('write me please'));
+    });
     describe('Repos Controller', function () {
+      describe('POST /api/repos/:key/hook', () => it('write me please'));
+      describe('GET /api/repos/search/:owner/:repo', () => it('write me please'));
       describe('GET /api/repos/:key', test('repos', 'findOne'));
+      describe('PUT /api/repos/:key', () => it('write me please'));
+      describe('DELETE /api/repos/:key', () => it('write me please'));
       describe('GET /api/repos', test('repos', 'findAll'));
     });
   });

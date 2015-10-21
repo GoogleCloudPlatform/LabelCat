@@ -16,7 +16,7 @@
 
 let crypto = require('crypto');
 
-module.exports = function (prediction, config, Promise, container, logger, messages, Repo, Model, User) {
+module.exports = function (prediction, config, Promise, container, logger, messages, Repo, Model, User, github) {
 
   let receivedHooks = [];
 
@@ -66,7 +66,6 @@ module.exports = function (prediction, config, Promise, container, logger, messa
      * Search for a GitHub repo by owner name and repo name.
      */
     search: Promise.coroutine(function* (req, res) {
-      let github = container.get('github');
       let repo = yield github.searchForRepo(req.user, req.params.owner, req.params.repo);
       if (repo) {
         return res.status(200).json(Repo.serializeRepo(repo)).end();
@@ -81,7 +80,6 @@ module.exports = function (prediction, config, Promise, container, logger, messa
      * Update a repo in the datastore.
      */
     updateOne: Promise.coroutine(function* (req, res) {
-      let github = container.get('github');
       let repo;
       if (req.params.key === 'new') {
         let githubRepo = yield github.findRepoById(req.user, req.body.id);
@@ -132,7 +130,6 @@ module.exports = function (prediction, config, Promise, container, logger, messa
      * GitHub posts to this endpoint whenever a webhook is triggered.
      */
     hook: Promise.coroutine(function* (req, res, next) {
-      let github = container.get('github');
       logger.info('received hook', req.params.key);
       // Verify GitHub's signature
       if (req.headers['x-hub-signature'] !== signBlob(config.github.webhookSecret, JSON.stringify(req.body))) {
