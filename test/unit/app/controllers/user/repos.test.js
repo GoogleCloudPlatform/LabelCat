@@ -14,7 +14,7 @@
 
 'use strict';
 
-module.exports = function (container, assert, Promise, sinon) {
+module.exports = function (container, assert, Promise, sinon, config) {
   return function () {
     let user, reqMock, resMock, githubMock, Repo, mockRepo, mockRepo2;
 
@@ -27,7 +27,7 @@ module.exports = function (container, assert, Promise, sinon) {
       Repo = container.get('Repo');
       mockRepo = {
         key: '1',
-        owner: { key: '2', login: 'foo' }
+        owner: { key: '2', login: config.github.ownerRestriction || 'foo' }
       };
       mockRepo2 = {
         key: '2',

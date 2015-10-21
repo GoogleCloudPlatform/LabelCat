@@ -18,7 +18,7 @@ module.exports = function (sinon, dataFaker) {
   return {
     create() {
       let userRepos = dataFaker.generateGitHubRepos('alice', 1234, '11-22-33-44', 'User')
-                        .concat(dataFaker.generateGitHubRepos('foo', 3333, '33-33-33-33', 'Organization'))
+                        .concat(dataFaker.generateGitHubRepos('GoogleCloudPlatform', 3333, '33-33-33-33', 'Organization'))
                         .concat(dataFaker.generateGitHubRepos('bar', 7777, '77-77-77-77', 'Organization'));
 
       return {

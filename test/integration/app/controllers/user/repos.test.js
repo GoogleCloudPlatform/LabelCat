@@ -14,7 +14,7 @@
 
 'use strict';
 
-module.exports = function (container, assert, testRequest, Promise, createSessionCookie) {
+module.exports = function (container, assert, testRequest, Promise, createSessionCookie, config) {
   return function () {
     let app, Repo, userSession, githubApi;
 
@@ -42,7 +42,9 @@ module.exports = function (container, assert, testRequest, Promise, createSessio
 
       assert.equal(
         response.body.length,
-        githubApi.userRepos.length,
+        githubApi.userRepos.filter(function (repo) {
+          return config.github.ownerRestriction ? repo.owner.login === config.github.ownerRestriction : true
+        }).length,
         'Response body should be repos of the authenticated user'
       );
 

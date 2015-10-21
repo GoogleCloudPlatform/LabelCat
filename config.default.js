@@ -16,7 +16,7 @@
 
 module.exports = {
   port: '8080',
-  host: '127.0.0.1',
+  host: '0.0.0.0',
 
   // Secret is used by cookie-session and csurf.
   // Set it to something more secure.
@@ -50,7 +50,7 @@ module.exports = {
     // The Client Secret of the application you registered on GitHub
     clientSecret: 'client-secret-here',
     // The callback url of the application you registered on GitHub
-    redirectUrl: process.env.NODE_ENV === 'production' ? 'https://<projectId>.appspot.com/auth/github/callback' : 'http://localhost:8080/auth/github/callback',
+    redirectUrl: process.env.NODE_ENV === 'production' ? 'https://<your-project-id>.appspot.com/auth/github/callback' : 'http://localhost:8080/auth/github/callback',
     // A secret used to secure incoming webhooks coming from GitHub
     webhookSecret: 'your-secret-here'
   }

@@ -101,7 +101,7 @@ module.exports = function (container, config, Promise, request) {
           'issues'
         ],
         config: {
-          url: `https://github-issue-labeler.appspot.com/api/repos/${repo.key}/hook`,
+          url: `https://${config.gcloud.projectId}.appspot.com/api/repos/${repo.key}/hook`,
           content_type: 'json',
           secret: config.github.webhookSecret
         }
@@ -165,6 +165,28 @@ module.exports = function (container, config, Promise, request) {
     },
 
     /**
+     * Get the orgs for the given user.
+     * http://mikedeboer.github.io/node-github/#user.prototype.getOrgs
+     *
+     * @private
+     *
+     * @param {object=} user - Logged-in user.
+     */
+    getOrgsForUser(user) {
+      return new Promise(function (resolve, reject) {
+        api(user).user.getOrgs({
+          per_page: 100
+        }, function (err, repo) {
+          if (err && (!err.code || err.code !== 404)) {
+            return reject(err);
+          } else {
+            return resolve(repo);
+          }
+        });
+      }).catch(getHandler('getOrgsForUser'));
+    },
+
+    /**
      * List all repositories for the given user that the user has some sort of
      * write access to.
      * See https://developer.github.com/v3/repos/#list-your-repositories
@@ -175,7 +197,6 @@ module.exports = function (container, config, Promise, request) {
     getReposForUser(user, page) {
       return new Promise((resolve, reject) => {
         api(user).repos.getAll({
-          user: user.get('login'),
           type: 'all',
           page: page,
           per_page: 100

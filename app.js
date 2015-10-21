@@ -73,10 +73,13 @@ exports.createServer = function () {
 
     // GitHub authentication endpoints
     app.get('/auth/github', auth.authenticate('github', {
-      scope: [config.github.accessLevel === 'private' ? 'repo' : 'public_repo']
+      scope: ['read:org', config.github.accessLevel === 'private' ? 'repo' : 'public_repo']
+    }, function (err, req, res, next) {
+      console.log(err);
+      next(err);
     }));
     app.get('/auth/github/callback', auth.authenticate('github', {
-      failureRedirect: '/login'
+      failureRedirect: '/401'
     }), function (req, res) {
       res.redirect('/');
     });

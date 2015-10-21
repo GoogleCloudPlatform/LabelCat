@@ -19,6 +19,9 @@ angular.module('labelcat', [
   $locationProvider.html5Mode(true).hashPrefix('!');
 
   $routeProvider
+    .when('/401', {
+      templateUrl: '/js/partials/401.html'
+    })
     .when('/404', {
       templateUrl: '/js/partials/404.html'
     })

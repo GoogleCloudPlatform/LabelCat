@@ -17,7 +17,7 @@
 let GitHubStrategy = require('passport-github').Strategy;
 let passport = require('passport');
 
-module.exports = function (config, dataset, User) {
+module.exports = function (config, dataset, User, github) {
 
   passport.serializeUser(function (user, done) {
     done(null, user.toJSON());
@@ -42,9 +42,25 @@ module.exports = function (config, dataset, User) {
       avatar_url: profile._json.avatar_url,
       access_token: accessToken
     });
-    return user.save().then(function (user) {
-      done(null, user);
-    }).catch(done);
+    if (typeof config.github.ownerRestriction === 'string') {
+      return github.getOrgsForUser(user).then(function (orgs) {
+        let allowed = config.github.ownerRestriction === user.get('login');
+        orgs.forEach(function (org) {
+          allowed = allowed || config.github.ownerRestriction === org.login;
+        });
+        if (!allowed) {
+          return done(null, false);
+        } else {
+          return user.save().then(function (user) {
+            done(null, user);
+          });
+        }
+      }).catch(done);
+    } else {
+      return user.save().then(function (user) {
+        done(null, user);
+      }).catch(done);
+    }
   }));
 
   // not really anything to export
