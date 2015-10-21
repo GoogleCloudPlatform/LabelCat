@@ -14,10 +14,10 @@
   "scripts": {
     "start": "node --harmony ${SCRIPT:-app.js}",
     "monitor": "nodemon --harmony ${SCRIPT:-app.js}",
-    "unit": "node --harmony node_modules/mocha/bin/mocha test/unit/app/index.test.js --reporter progress",
-    "unit-cover": "node --harmony node_modules/istanbul-harmony/lib/cli.js cover --hook-run-in-context node_modules/mocha/bin/_mocha -- test/unit/app/index.test.js --reporter progress",
-    "integration": "node --harmony node_modules/mocha/bin/mocha test/integration/app/index.test.js --reporter progress",
-    "integration-cover": "node --harmony node_modules/istanbul-harmony/lib/cli.js cover --hook-run-in-context node_modules/mocha/bin/_mocha -- test/integration/app/index.test.js --reporter progress",
+    "unit": "node --harmony node_modules/mocha/bin/mocha test/unit/app/index.test.js --reporter dot",
+    "unit-cover": "node --harmony node_modules/istanbul-harmony/lib/cli.js cover --hook-run-in-context node_modules/mocha/bin/_mocha -- test/unit/app/index.test.js --reporter dot",
+    "integration": "node --harmony node_modules/mocha/bin/mocha test/integration/app/index.test.js --reporter dot",
+    "integration-cover": "node --harmony node_modules/istanbul-harmony/lib/cli.js cover --hook-run-in-context node_modules/mocha/bin/_mocha -- test/integration/app/index.test.js --reporter dot",
     "test": "npm run unit && npm run integration",
     "cover": "npm run unit-cover && npm run integration-cover",
     "deploy": "gcloud preview app deploy app.yaml worker.yaml --version alpha-001 --promote"

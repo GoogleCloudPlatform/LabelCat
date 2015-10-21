@@ -95,9 +95,7 @@ module.exports = function (prediction, config, Promise, container, logger, messa
         // repo is being enabled
         let hook = yield github.findOrCreateHook(repo.toJSON(), req.user);
         if (hook instanceof Error) {
-          // temporarily ignore this
-          // throw new Error('Repo missing or need access!');
-          req.body.hookId = 9999999999;
+          throw new Error('Repo missing or need access!');
         } else if (!hook) {
           throw new Error('Failed to find or create hook!');
         } else {

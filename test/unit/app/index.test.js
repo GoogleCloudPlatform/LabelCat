@@ -47,6 +47,7 @@ describe('Unit Tests', function () {
       describe('findOne()', test('repos', 'findOne'));
       describe('findAll()', test('repos', 'findAll'));
       describe('search()', test('repos', 'search'));
+      describe('updateOne()', test('repos', 'updateOne'));
     });
   });
 
