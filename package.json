@@ -20,6 +20,7 @@
     "integration-cover": "node --harmony node_modules/istanbul-harmony/lib/cli.js cover --hook-run-in-context node_modules/mocha/bin/_mocha -- test/integration/app/index.test.js --reporter dot",
     "test": "npm run unit && npm run integration",
     "cover": "npm run unit-cover && npm run integration-cover",
+    "coveralls": "npm run cover && cat ./coverage/lcov.info | node_modules/coveralls/bin/coveralls.js",
     "deploy": "gcloud preview app deploy app.yaml worker.yaml --version alpha-001 --promote"
   },
   "dependencies": {
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "chai": "3.3.0",
+    "coveralls": "^2.11.4",
     "faker": "3.0.1",
     "istanbul-harmony": "0.3.16",
     "keygrip": "1.0.1",

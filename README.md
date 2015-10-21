@@ -1,4 +1,4 @@
-# LabelCat [![Build Status](https://travis-ci.org/GoogleCloudPlatform/LabelCat.svg)](https://travis-ci.org/GoogleCloudPlatform/LabelCat)
+# LabelCat [![Build Status](https://travis-ci.org/GoogleCloudPlatform/LabelCat.svg)](https://travis-ci.org/GoogleCloudPlatform/LabelCat) [![Test Coverage](https://coveralls.io/repos/GoogleCloudPlatform/LabelCat/badge.svg?branch=master&service=github)](https://coveralls.io/github/GoogleCloudPlatform/LabelCat?branch=master)
 
 _Disclaimer: This is not an official Google product._
 
