@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Labelcat by GoogleCloudPlatform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Labelcat</h1>
+      <h2 class="project-tagline">Uses Google Prediction API to label GitHub Issues as they are created.</h2>
+      <a href="https://github.com/GoogleCloudPlatform/LabelCat" class="btn">View on GitHub</a>
+      <a href="https://github.com/GoogleCloudPlatform/LabelCat/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/GoogleCloudPlatform/LabelCat/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="labelcat--" class="anchor" href="#labelcat--" aria-hidden="true"><span class="octicon octicon-link"></span></a>LabelCat <a href="https://travis-ci.org/GoogleCloudPlatform/LabelCat"><img src="https://travis-ci.org/GoogleCloudPlatform/LabelCat.svg" alt="Build Status"></a> <a href="https://coveralls.io/github/GoogleCloudPlatform/LabelCat?branch=master"><img src="https://coveralls.io/repos/GoogleCloudPlatform/LabelCat/badge.svg?branch=master&amp;service=github" alt="Test Coverage"></a>
+</h1>
+
+<p><em>Disclaimer: This is not an official Google product.</em></p>
+
+<p>Organizing the issues in your GitHub repositories can be a different kind of
+animal, that's why you need LabelCat.</p>
+
+<p>LabelCat is a NodeJS app that uses Google's Prediction API to automatically
+label GitHub Issues as they are created. Who taught LabelCat this trick you
+ask? You did...or rather, you will. Once deployed, you must train LabelCat on
+previously labeled issues, preferably from a variety of well-labeled
+repositories.</p>
+
+<p>These instructions show how to run LabelCat on Google Cloud Managed VMs for
+maximum ease-of-use and scalability, but LabelCat can be deployed virtually
+anywhere.</p>
+
+<p>While many Google Cloud Platform Node.js samples are small and simple, focusing
+on a single concept or piece of functionality, there aren't many full-blown
+Node.js apps to look at and tinker with. LabelCat fills the void somewhat by
+showcasing a larger Node.js app that addresses a number of production concerns.
+As such LabelCat is an excellent resource as you build your own production
+Node.js applications on Google Cloud Platform.</p>
+
+<p>Built by <a href="https://github.com/jmdobry">@jmdobry</a></p>
+
+<h2>
+<a id="table-of-contents" class="anchor" href="#table-of-contents" aria-hidden="true"><span class="octicon octicon-link"></span></a>Table of Contents</h2>
+
+<ul>
+<li><a href="#whats-included">What's included</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#deployment">Deployment</a></li>
+</ul>
+
+<h2>
+<a id="whats-included" class="anchor" href="#whats-included" aria-hidden="true"><span class="octicon octicon-link"></span></a>What's included</h2>
+
+<ul>
+<li>A NodeJS Web API + worker</li>
+<li>An Angular + Material UI frontend</li>
+<li>Deployment instructions</li>
+<li>Detailed documentation of every piece</li>
+</ul>
+
+<p>As an exercise, try swapping out the backend or frontend with something you
+write yourself.</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<h3>
+<a id="clone-and-setup" class="anchor" href="#clone-and-setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>Clone and setup</h3>
+
+<ol>
+<li>Install Node.js &gt;= 4.x</li>
+<li><code>git clone https://github.com/GoogleCloudPlatform/LabelCat</code></li>
+<li><code>cd LabelCat</code></li>
+<li><code>npm install</code></li>
+<li>
+<code>cp config.default.js config.js</code> (<code>config.js</code> is where you customize the app)</li>
+<li>Modify <code>config.js</code> as necessary.</li>
+</ol>
+
+<h3>
+<a id="register-developer-application-on-github" class="anchor" href="#register-developer-application-on-github" aria-hidden="true"><span class="octicon octicon-link"></span></a>Register Developer Application on GitHub</h3>
+
+<p>LabelCat uses GitHub OAuth to authenticate users. Create an <em>individual</em>
+developer application if you intend to use LabelCat on repositories owned by
+your GitHub user. Create an <em>organization</em> developer application if you intend
+to use LabelCat on repositories owned by an organization that you administer.</p>
+
+<p><em>Individual</em> Application: Go to <a href="https://github.com/settings/developers">https://github.com/settings/developers</a> to
+register a new individual application.</p>
+
+<p><em>Organization</em> Application: Go to
+<code>https://github.com/organizations/&lt;organization&gt;/settings/applications/new</code>.
+Replace <code>&lt;organization&gt;</code> with the name of your organization.</p>
+
+<p><strong>Register the Application</strong>:</p>
+
+<ol>
+<li>Click "Register new application"</li>
+<li>Enter application name, e.g. <code>Foo LabelCat</code>
+</li>
+<li>Enter homepage URL, e.g. <code>https://labelcat.appspot.com/</code>
+</li>
+<li>Optionally enter application description</li>
+<li>Enter authorization callback URL, e.g.
+<code>https://labelcat.appspot.com/auth/github/callback</code>
+</li>
+<li>Click "Register application"</li>
+<li>Copy the generated <code>Client ID</code> and <code>Client Secret</code> into the <code>config.js</code> file
+that you created earlier</li>
+</ol>
+
+<h3>
+<a id="register-for-google-cloud-platform" class="anchor" href="#register-for-google-cloud-platform" aria-hidden="true"><span class="octicon octicon-link"></span></a>Register for Google Cloud Platform</h3>
+
+<p>The Google Cloud Platform provides a $300 free trial for new accounts, enough to
+run the app for a "long time" (TODO: Update for accuracy). </p>
+
+<ol>
+<li>Register at <a href="https://console.developers.google.com/freetrial">https://console.developers.google.com/freetrial</a>
+</li>
+<li>Create a new Project</li>
+<li>Enable the Predictions API, Datastore API and PubSub API for your new project</li>
+<li>Go to "Credentials", create a new Service Account and download the generated
+key file</li>
+</ol>
+
+<h2>
+<a id="deployment" class="anchor" href="#deployment" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deployment</h2>
+
+<ol>
+<li>Install the <a href="https://cloud.google.com/sdk/">Google Cloud SDK</a>
+</li>
+<li><code>gcloud preview app deploy app.yaml worker.yaml --promote</code></li>
+</ol>
+
+<h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<p>See <a href="https://github.com/GoogleCloudPlatform/LabelCat/blob/master/CONTRIBUTING.md">CONTRIBUTING</a>.</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>Copyright 2015, Google, Inc.</p>
+
+<p>Licensed under the Apache License, Version 2.0</p>
+
+<p>See <a href="https://github.com/GoogleCloudPlatform/LabelCat/blob/master/LICENSE">LICENSE</a>.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/GoogleCloudPlatform/LabelCat">Labelcat</a> is maintained by <a href="https://github.com/GoogleCloudPlatform">GoogleCloudPlatform</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
