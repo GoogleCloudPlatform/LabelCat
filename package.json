@@ -2,8 +2,14 @@
   "name": "labelcat",
   "version": "1.0.0-alpha.1",
   "private": true,
-  "author": "Jason Dobry <jdobry@google.com>",
   "license": "Apache Version 2.0",
+  "author": "Google Inc.",
+  "contributors": [
+    {
+      "name": "Jason Dobry",
+      "email": "jason.dobry@gmail.com"
+    }
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/GoogleCloudPlatform/LabelCat.git"
