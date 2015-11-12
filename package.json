@@ -30,6 +30,7 @@
     "deploy": "gcloud preview app deploy app.yaml worker.yaml --version alpha-001 --promote"
   },
   "dependencies": {
+    "@google/cloud-trace": "0.2.0",
     "bluebird": "2.10.2",
     "body-parser": "1.14.1",
     "cookie-session": "1.2.0",

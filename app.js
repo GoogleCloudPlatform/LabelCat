@@ -14,6 +14,11 @@
 
 'use strict';
 
+// Activate Google Cloud Trace API
+if (process.env.NODE_ENV === 'production') {
+  require('@google/cloud-trace').start();
+}
+
 // Express and http server
 let express = require('express');
 let http = require('http');

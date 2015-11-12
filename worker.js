@@ -14,12 +14,24 @@
 
 'use strict';
 
+let agent;
+
+// Activate Google Cloud Trace API
+if (process.env.NODE_ENV === 'production') {
+  agent = require('@google/cloud-trace').start();
+} else {
+  agent = {
+    startSpan() {},
+    endSpan() {}
+  };
+}
+
 // Express and http server
-var express = require('express');
-var http = require('http');
+let express = require('express');
+let http = require('http');
 
 // IOC container
-var container = require('./container');
+let container = require('./container');
 
 // By exporting our Express app creation functionality we can more easily write
 // tests.
@@ -27,8 +39,8 @@ exports.createServer = function () {
 
   // Pull an initial set of dependencies from our IOC container
   return container.resolve(function (logger, messages, errorHandler, Model) {
-    var hasSubscription = false;
-    var app = express();
+    let hasSubscription = false;
+    let app = express();
 
     // Log every request
     app.use(logger.requestLogger);
@@ -82,7 +94,7 @@ exports.createServer = function () {
      * @param {object} message - PubSub message. See https://googlecloudplatform.github.io/gcloud-node/#/docs/pubsub/topic?method=subscription
      */
     function handleMessage(message) {
-      var modelKey = message.data;
+      let modelKey = message.data;
 
       if (typeof modelKey !== 'string' && typeof modelKey !== 'number') {
         logger.warn('Unknown request', message.data);
@@ -94,10 +106,12 @@ exports.createServer = function () {
         });
       } else {
         logger.info('Training model: ', modelKey);
+        let opaque = agent.startSpan('train_model', { key: modelKey });
         Model.trainOne(modelKey).catch(function (err) {
           logger.error('Failed to train model: ', modelKey);
           logger.error(err);
         }).finally(function () {
+          agent.endSpan(opaque, { key: modelKey });
           logger.info('Acking model: ', modelKey);
           message.ack(function (err) {
             if (err) {
@@ -129,9 +143,9 @@ exports.createServer = function () {
 // "main" entry point of the program. The other case is that this file is being
 // pulled into one of our tests.
 if (module === require.main) {
-  var config = container.get('config');
-  var app = exports.createServer();
-  var server = http.createServer(app).listen(process.env.NODE_ENV === 'production' ? config.port : 8082, config.host, function () {
+  let config = container.get('config');
+  let app = exports.createServer();
+  let server = http.createServer(app).listen(process.env.NODE_ENV === 'production' ? config.port : 8082, config.host, function () {
     console.log(`App listening at http://${server.address().address}:${server.address().port}`);
     console.log('Press Ctrl+C to quit.');
   });
