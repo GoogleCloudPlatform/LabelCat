@@ -91,7 +91,7 @@ key file
 ## Deployment
 
 1. Install the [Google Cloud SDK][2]
-1. `gcloud preview app deploy app.yaml worker.yaml --promote`
+1. `gcloud app deploy app.yaml worker.yaml --promote`
 
 ## Contributing
 

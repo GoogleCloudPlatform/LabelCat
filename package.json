@@ -27,7 +27,7 @@
     "test": "npm run unit && npm run integration",
     "cover": "npm run unit-cover && npm run integration-cover",
     "coveralls": "npm run cover && cat ./coverage/lcov.info | node_modules/coveralls/bin/coveralls.js",
-    "deploy": "gcloud preview app deploy app.yaml worker.yaml --version alpha-001 --promote"
+    "deploy": "gcloud app deploy app.yaml worker.yaml --version alpha-001 --promote"
   },
   "dependencies": {
     "@google/cloud-trace": "0.2.0",
