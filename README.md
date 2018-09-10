@@ -1,5 +1,7 @@
 # LabelCat [![Build Status](https://travis-ci.org/GoogleCloudPlatform/LabelCat.svg)](https://travis-ci.org/GoogleCloudPlatform/LabelCat) [![Test Coverage](https://coveralls.io/repos/GoogleCloudPlatform/LabelCat/badge.svg?branch=master&service=github)](https://coveralls.io/github/GoogleCloudPlatform/LabelCat?branch=master)
 
+## Note: LabelCat uses the Cloud Prediction API, which has since [been deprecated](https://cloud.google.com/prediction/) in favor of [AutoML Natural Language](https://cloud.google.com/natural-language/automl/docs/).
+
 _Disclaimer: This is not an official Google product._
 
 Organizing the issues in your GitHub repositories can be a different kind of
