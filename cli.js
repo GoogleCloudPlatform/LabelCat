@@ -5,24 +5,59 @@
 const axios = require('axios');
 const async = require("async");
 const fs = require('fs');
-// const argv = require('yargs').argv;
 const settings = require('./settings.json')
 const Json2csvParser = require('json2csv').Parser;
 
 require(`yargs`)
   .demand(1)
   .command(
-    `retrieveIssues <repoData> <issuesData>`,
-    `Retrieve the current issue information from a list of gitHub repositories.`,
+    `retrieveIssues <repoDataFilePath> <issuesDataFilePath>`,
+    `Retrieve the current issue information from a json object of gitHub repositories.`,
     {},
     opts => {
       retrieveIssues(opts.repoData, opts.issuesData)
     }
   )
+  .command(
+    `createDataset <dataSet>`,
+    `Create a new Google AutoML NL dataset with the specified name.`,
+    {},
+    opts => {
+        //TODO: create function
+    }
+  )
+  .command(
+    `importData <issuesDataFilePath> <datasetID>`,
+    `Import the GitHub issues data into the Google AutoML NL dataset by specifying the file of issues data and the dataset ID.`,
+    {},
+    opts => {
+        //TODO: create function
+    }
+  )
+  .command(
+    `createModel <datasetID> <modelName> <GCPprojectID> <GCPcomputeRegion>`,
+    `Train the Google AutoML NL model by specifying the dataset ID generated, the name for new model being generated, the ID of the Google Cloud Platform project, and the region from Google Cloud Platform project.`,
+    {},
+    opts => {
+        //TODO: create function
+    }
+  )
+  .command(
+    `analyzeAccuracy <issuesDataFilePathilepath> <repo>`,
+    `Calculate the accuracy of the model's predictons by comparing LabelCat labels applied upon issue opening with the labels present when issue was closed.`,
+    {},
+    opts => {
+        //TODO: create function
+    }
+  )
   .example(`$0 retrieveIssues repoData.json issuesData.csv`, `Retrieves issues from list of repos in repoData.json and saves the resulting information to issuesData.csv.`)
+  .example(`$0 createDataset Data`, `Creates a new dataset with the specified name.`)
+  .example(`$0 importData issuesData.csv 1248102981`, `Imports the GitHub issues data into the dataset by specifying the file of issues data and the dataset ID.`)
+  .example(`$0 createModel 22093823 “test model” 23423423 us-central1`, `Trains the Google AutoML NL model by specifying the dataset ID generated, the name for new model being generated, the ID of the Google Cloud Platform project, and the region from Google Cloud Platform project.`)
+  .example(`$0 analyzeAccuracy issuesData.csv some-repo`, `Calculates the accuracy of the model's predictons by comparing LabelCat labels applied upon issue opening with the labels present when issue was closed.`)
   .wrap(120)
   .recommendCommands()
-  .epilogue(`For more information, say hay`)
+  .epilogue(`For more information, contact....`)
   .help()
   .strict().argv;
 
@@ -82,13 +117,13 @@ async function getIssueInfo(issue) {
   }
 }
 
-
+// extracts the value for the name key from each label object
+// and returns an array of all the issue's labels
 function separateLabels(labelsArray){
   let newArray = []
   labelsArray.forEach(function (labelObject){
     newArray.push(labelObject.name);
   });
-
   return newArray;
 }
 
@@ -107,18 +142,3 @@ function makeCSV(issues, file) {
 
   fs.writeFileSync(file, csv);
 }
-
-
-  // retrieveIssues()
-
-  // // labelcat-retrieveIssues -r repoData.csv -i issuesData.csv
-  // const argv = require('yargs')
-  //   .usage('Usage: $0 -r <repoData> -i <issuesData>\n e.g $0 -r repoData.csv -i issuesData.csv')
-  //   .alias({'r': 'repos', 'i': 'issues'})
-  //   .nargs({'r': 1, 'i': 1})
-  //   .describe({'r': 'List of repos to pull issues from', 'i': 'File to save issue data'})
-  //   .demandOption(['r', 'i'])
-  //   .help('h')
-  //   .alias('h', 'help')
-  //   // .epilog('Copyright Abdul 2017')
-  //   .argv
