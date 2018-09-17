@@ -27,6 +27,14 @@ require(`yargs`)
   .strict().argv;
 
 
+
+/**
+ * Takes a filepath to a json object of repositories
+ * and a filename to save the resulting issue data,
+ * then makes api call to GitHub to retrieve current issues
+ * @param {string} data
+ * @param {string} file
+ */
 async function retrieveIssues(data, file) {
   let rawdata = fs.readFileSync(data,'utf8')
   let issues = JSON.parse(rawdata);
