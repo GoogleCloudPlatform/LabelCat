@@ -7,6 +7,18 @@ _Disclaimer: This is not an official Google product._
 Organizing the issues in your GitHub repositories can be a different kind of
 animal, that's why you need LabelCat.
 
+## Installation
+
+### Clone and setup
+
+1. Install Node.js >= 4.x
+1. `git clone https://github.com/GoogleCloudPlatform/LabelCat`
+1. `cd LabelCat`
+1. `npm install`
+1. `npm link`
+1. `cp defaultsettings.json settings.json` (`settings.json` is where you customize the app)
+1. Modify `settings.json` as necessary.
+
 ## Contributing
 
 See [CONTRIBUTING][3].
