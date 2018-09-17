@@ -15,7 +15,7 @@ require(`yargs`)
     `Retrieve the current issue information from a json object of gitHub repositories.`,
     {},
     opts => {
-      retrieveIssues(opts.repoData, opts.issuesData)
+      retrieveIssues(opts.repoDataFilePath, opts.issuesDataFilePath)
     }
   )
   .command(
