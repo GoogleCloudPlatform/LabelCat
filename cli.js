@@ -7,6 +7,10 @@ const async = require("async");
 const fs = require('fs');
 const settings = require('./settings.json')
 const Json2csvParser = require('json2csv').Parser;
+// Import the Google Cloud client library
+const automl = require('@google-cloud/automl');
+
+
 
 require(`yargs`)
   .demand(1)
@@ -19,11 +23,16 @@ require(`yargs`)
     }
   )
   .command(
-    `createDataset <dataSet>`,
+    `createDataset <datasetName> [multilabel]`,
     `Create a new Google AutoML NL dataset with the specified name.`,
     {},
     opts => {
-        //TODO: create function
+      const projectID = settings.projectID;
+      const computeRegion = settings.computeRegion;
+      const datasetName = opts.datasetName;
+      const multiLabel = opts.multilabel;
+
+      createDataset(projectID, computeRegion, datasetName, multiLabel)
     }
   )
   .command(
@@ -104,7 +113,7 @@ async function getIssueInfo(issue) {
   // should this have different response to error?
   if (response.err) { console.log('error'); }
   else {
-     let issueInfo = {}
+    let issueInfo = {}
 
     issueInfo.repoName = repoName;
     issueInfo.issueNumber = number;
@@ -141,4 +150,82 @@ function makeCSV(issues, file) {
   const csv = json2csvParser.parse(issues);
 
   fs.writeFileSync(file, csv);
+}
+
+
+
+
+
+async function createDataset(projectId, computeRegion, datasetName, multilabel) {
+// [START automl_natural_language_createDataset]
+const automl = require(`@google-cloud/automl`);
+
+const client = new automl.v1beta1.AutoMlClient();
+
+
+// A resource that represents Google Cloud Platform location.
+const projectLocation = client.locationPath(projectId, computeRegion);
+
+// Classification type is assigned based on multilabel value.
+let classificationType = `MULTICLASS`;
+if (multilabel) {
+  classificationType = `MULTILABEL`;
+}
+
+// Set dataset name and metadata.
+const myDataset = {
+  displayName: datasetName,
+  textClassificationDatasetMetadata: {
+    classificationType: classificationType,
+  },
+};
+
+
+// ***
+// TODO: using await in this way did not work!!
+// Figure out what style to use for these functions so it is consistent!!
+// ***
+// **
+// *
+// Create a dataset with the dataset metadata in the region.
+// let dataset = await client.createDataset({parent: projectLocation, dataset: myDataset});
+//
+// if (dataset.err) {
+//   console.log('error'); }
+// else {
+//   // Display the dataset information.
+//   console.log(`Dataset name: ${dataset.name}`);
+//   console.log(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
+//   console.log(`Dataset display name: ${dataset.displayName}`);
+//   console.log(`Dataset example count: ${dataset.exampleCount}`);
+//   console.log(`Text classification type:`);
+//   console.log(
+//     `\t ${dataset.textClassificationDatasetMetadata.classificationType}`
+//   );
+//   console.log(`Dataset create time:`);
+//   console.log(`\tseconds: ${dataset.createTime.seconds}`);
+//   console.log(`\tnanos: ${dataset.createTime.nanos}`);
+//   }
+
+client
+  .createDataset({parent: projectLocation, dataset: myDataset})
+  .then(responses => {
+    const dataset = responses[0];
+
+    // Display the dataset information.
+    console.log(`Dataset name: ${dataset.name}`);
+    console.log(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
+    console.log(`Dataset display name: ${dataset.displayName}`);
+    console.log(`Dataset example count: ${dataset.exampleCount}`);
+    console.log(`Text classification type:`);
+    console.log(
+      `\t ${dataset.textClassificationDatasetMetadata.classificationType}`
+    );
+    console.log(`Dataset create time:`);
+    console.log(`\tseconds: ${dataset.createTime.seconds}`);
+    console.log(`\tnanos: ${dataset.createTime.nanos}`);
+  })
+  .catch(err => {
+    console.error(err);
+  });
 }

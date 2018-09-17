@@ -29,7 +29,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "async": "^2.6.1",
+    "@google-cloud/automl": "^0.1.2",
     "axios": "^0.18.0",
     "csv-write-stream": "^2.0.0",
     "json2csv": "^4.2.1",
