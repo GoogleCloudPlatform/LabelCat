@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-// node retrieveIssues.js -i testIssues.json -s testCSV.csv
-
 
 'use strict';
 
@@ -10,17 +8,27 @@ const fs = require('fs');
 // const argv = require('yargs').argv;
 const settings = require('./settings.json')
 const Json2csvParser = require('json2csv').Parser;
-const yargs = require('yargs')
 
-yargs
-  .commandDir(join(__dirname, 'lib', 'commands'))
+require(`yargs`)
   .demand(1)
+  .command(
+    `retrieveIssues <repoData> <issuesData>`,
+    `Retrieve the current issue information from a list of gitHub repositories.`,
+    {},
+    opts => {
+      retrieveIssues(opts.repoData, opts.issuesData)
+    }
+  )
+  .example(`$0 retrieveIssues repoData.json issuesData.csv`, `Retrieves issues from list of repos in repoData.json and saves the resulting information to issuesData.csv.`)
+  .wrap(120)
+  .recommendCommands()
+  .epilogue(`For more information, say hay`)
   .help()
+  .strict().argv;
 
 
 async function retrieveIssues(data, file) {
-  // get file from -i flag argument
-  let rawdata = data;
+  let rawdata = fs.readFileSync(data,'utf8')
   let issues = JSON.parse(rawdata);
 
   const issuesArray = issues.Issues;
@@ -93,4 +101,16 @@ function makeCSV(issues, file) {
 }
 
 
-// retrieveIssues()
+  // retrieveIssues()
+
+  // // labelcat-retrieveIssues -r repoData.csv -i issuesData.csv
+  // const argv = require('yargs')
+  //   .usage('Usage: $0 -r <repoData> -i <issuesData>\n e.g $0 -r repoData.csv -i issuesData.csv')
+  //   .alias({'r': 'repos', 'i': 'issues'})
+  //   .nargs({'r': 1, 'i': 1})
+  //   .describe({'r': 'List of repos to pull issues from', 'i': 'File to save issue data'})
+  //   .demandOption(['r', 'i'])
+  //   .help('h')
+  //   .alias('h', 'help')
+  //   // .epilog('Copyright Abdul 2017')
+  //   .argv
