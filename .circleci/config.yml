@@ -1,0 +1,95 @@
+version: 2
+workflows:
+  version: 2
+  tests:
+    jobs: &workflow_jobs
+      - node8:
+          filters: &all_commits
+            tags:
+              only: /.*/
+      - node10:
+          filters: *all_commits
+      - lint:
+          requires:
+            - node8
+            - node10
+          filters: *all_commits
+      - tests:
+          requires:
+            - lint
+          filters: &master_and_releases
+            branches:
+              only: master
+            tags: &releases
+              only: '/^v[\d.]+$/'
+  nightly:
+    triggers:
+      - schedule:
+          cron: 0 7 * * *
+          filters:
+            branches:
+              only: master
+    jobs: *workflow_jobs
+jobs:
+  node8:
+    docker:
+      - image: 'node:8'
+        user: node
+    steps: &unit_tests_steps
+      - checkout
+      - run: &npm_install_and_link
+          name: Install and link the module
+          command: |-
+            mkdir -p /home/node/.npm-global
+            ./.circleci/npm-install-retry.js
+          environment:
+            NPM_CONFIG_PREFIX: /home/node/.npm-global
+      - run: npm test
+      - run: node_modules/.bin/codecov
+  node10:
+    docker:
+      - image: 'node:10'
+        user: node
+    steps: *unit_tests_steps
+  lint:
+    docker:
+      - image: 'node:8'
+        user: node
+    steps:
+      - checkout
+      - run: *npm_install_and_link
+      - run:
+          name: Run linting.
+          command: npm run lint
+          environment:
+            NPM_CONFIG_PREFIX: /home/node/.npm-global
+  system-tests:
+    docker:
+      - image: 'node:8'
+        user: node
+    steps:
+      - checkout
+      - run:
+          name: Decrypt credentials.
+          command: |
+            if ! [[ -z "${SYSTEM_TESTS_ENCRYPTION_KEY}" ]]; then
+              for encrypted_key in .circleci/*.json.enc; do
+                openssl aes-256-cbc -d -in $encrypted_key \
+                  -out $(echo $encrypted_key | sed 's/\.enc//') \
+                  -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
+              done
+            fi
+      - run: *npm_install_and_link
+      - run:
+          name: Run the system tests.
+          command: npm run system-test
+          environment:
+            GCLOUD_PROJECT: label-cat
+            GOOGLE_APPLICATION_CREDENTIALS: .circleci/key.json
+      - run:
+          name: Remove unencrypted key.
+          command: |
+            if ! [[ -z "${SYSTEM_TESTS_ENCRYPTION_KEY}" ]]; then
+              rm .circleci/*.json
+            fi
+          when: always
