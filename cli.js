@@ -37,10 +37,15 @@ require(`yargs`)
   )
   .command(
     `importData <issuesDataFilePath> <datasetID>`,
-    `Import the GitHub issues data into the Google AutoML NL dataset by specifying the file of issues data and the dataset ID.`,
+    `Import the GitHub issues data into the Google AutoML NL dataset by specifying the file of issues  data and the dataset ID.`,
     {},
     opts => {
-        //TODO: create function
+      const projectID = settings.projectID;
+      const computeRegion = settings.computeRegion;
+      const datasetId = opts.datasetID;
+      const path = opts.issuesDataFilePath;
+//  TODO: SHOULD THIS READ FROM LOCAL FILE OR REQUIRE GCS UPLOAD LIKE CODE SAMPLE?
+      importData(projectID, computeRegion, datasetId, path);
     }
   )
   .command(
@@ -228,4 +233,42 @@ client
   .catch(err => {
     console.error(err);
   });
+}
+
+
+
+
+
+async function importData(projectId, computeRegion, datasetId, path) {
+  // [START automl_natural_language_importDataset]
+  const automl = require(`@google-cloud/automl`);
+
+  const client = new automl.v1beta1.AutoMlClient();
+
+  // Get the full path of the dataset.
+  const datasetFullId = client.datasetPath(projectId, computeRegion, datasetId);
+
+  // Get the multiple Google Cloud Storage URIs.
+  const inputUris = path.split(`,`);
+  const inputConfig = {
+    gcsSource: {
+      inputUris: inputUris,
+    },
+  };
+
+  // Import the dataset from the input URI.
+  client
+    .importData({name: datasetFullId, inputConfig: inputConfig})
+    .then(responses => {
+      const operation = responses[0];
+      console.log(`Processing import...`);
+      return operation.promise();
+    })
+    .then(responses => {
+      // The final result of the operation.
+      if (responses[2].done === true) console.log(`Data imported.`);
+    })
+    .catch(err => {
+      console.error(err);
+    });
 }
