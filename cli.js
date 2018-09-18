@@ -3,11 +3,9 @@
 'use strict';
 
 const axios = require('axios');
-const async = require("async");
 const fs = require('fs');
 const settings = require('./settings.json')
 const Json2csvParser = require('json2csv').Parser;
-// Import the Google Cloud client library
 const automl = require('@google-cloud/automl');
 
 
@@ -113,10 +111,9 @@ async function getIssueInfo(issue) {
 
   let url = `https://api.github.com/repos/${repoName}/issues/${number}?client_id=${githubClientID}&client_secret=${githubClientSecret}`;
 
-  const response = await axios.get(url);
-  // should this have different response to error?
-  if (response.err) { console.log('error'); }
-  else {
+  try {
+    const response = await axios.get(url);
+
     let issueInfo = {}
 
     issueInfo.repoName = repoName;
@@ -127,16 +124,16 @@ async function getIssueInfo(issue) {
     issueInfo.labels = labelNames;
 
     return issueInfo;
+  } catch (error) {
+    console.log(error);
   }
 }
+
 
 // extracts the value for the name key from each label object
 // and returns an array of all the issue's labels
 function separateLabels(labelsArray){
-  let newArray = []
-  labelsArray.forEach(function (labelObject){
-    newArray.push(labelObject.name);
-  });
+  const newArray = labelsArray.map(labelObject => labelObject.name)
   return newArray;
 }
 
