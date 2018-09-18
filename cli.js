@@ -27,12 +27,12 @@ require(`yargs`)
     `Create a new Google AutoML NL dataset with the specified name.`,
     {},
     opts => {
-      const projectID = settings.projectID;
-      const computeRegion = settings.computeRegion;
-      const datasetName = opts.datasetName;
-      const multiLabel = opts.multilabel;
-
-      createDataset(projectID, computeRegion, datasetName, multiLabel)
+      // const projectID = settings.projectID;
+      // const computeRegion = settings.computeRegion;
+      // const datasetName = opts.datasetName;
+      // const multiLabel = opts.multilabel;
+      //
+      // createDataset(projectID, computeRegion, datasetName, multiLabel)
     }
   )
   .command(
@@ -40,12 +40,12 @@ require(`yargs`)
     `Import the GitHub issues data into the Google AutoML NL dataset by specifying the file of issues  data and the dataset ID.`,
     {},
     opts => {
-      const projectID = settings.projectID;
-      const computeRegion = settings.computeRegion;
-      const datasetId = opts.datasetID;
-      const path = opts.issuesDataFilePath;
-//  TODO: SHOULD THIS READ FROM LOCAL FILE OR REQUIRE GCS UPLOAD LIKE CODE SAMPLE?
-      importData(projectID, computeRegion, datasetId, path);
+//       const projectID = settings.projectID;
+//       const computeRegion = settings.computeRegion;
+//       const datasetId = opts.datasetID;
+//       const path = opts.issuesDataFilePath;
+// //  TODO: SHOULD THIS READ FROM LOCAL FILE OR REQUIRE GCS UPLOAD LIKE CODE SAMPLE?
+//       importData(projectID, computeRegion, datasetId, path);
     }
   )
   .command(
@@ -85,7 +85,7 @@ require(`yargs`)
  * @param {string} file
  */
 async function retrieveIssues(data, file) {
-  let rawdata = fs.readFileSync(data,'utf8')
+  const rawdata = fs.readFileSync(data,'utf8')
   let issues = JSON.parse(rawdata);
 
   const issuesArray = issues.Issues;
@@ -105,16 +105,15 @@ async function retrieveIssues(data, file) {
  * @param {object} issue
  */
 async function getIssueInfo(issue) {
-  let repoName = issue.Repo;
-  let number = issue.IssueID;
-  let inssueInfo = {}
+  const repoName = issue.Repo;
+  const number = issue.IssueID;
 
   const githubClientID = settings.githubClientID;
   const githubClientSecret = settings.githubClientSecret;
 
   let url = `https://api.github.com/repos/${repoName}/issues/${number}?client_id=${githubClientID}&client_secret=${githubClientSecret}`;
 
-  let response = await axios.get(url);
+  const response = await axios.get(url);
   // should this have different response to error?
   if (response.err) { console.log('error'); }
   else {
@@ -124,7 +123,7 @@ async function getIssueInfo(issue) {
     issueInfo.issueNumber = number;
     issueInfo.title = response.data.title;
     issueInfo.body = response.data.body;
-    let labelNames = separateLabels(response.data.labels);
+    const labelNames = separateLabels(response.data.labels);
     issueInfo.labels = labelNames;
 
     return issueInfo;
@@ -144,7 +143,6 @@ function separateLabels(labelsArray){
 
 /**
  * Creates a csv file of issue data
- * Writes to cli argument provided by -s flag
  *
  * @param {array} issues - The issues to group.
  */
@@ -158,117 +156,117 @@ function makeCSV(issues, file) {
 }
 
 
-
-
-
-async function createDataset(projectId, computeRegion, datasetName, multilabel) {
-// [START automl_natural_language_createDataset]
-const automl = require(`@google-cloud/automl`);
-
-const client = new automl.v1beta1.AutoMlClient();
-
-
-// A resource that represents Google Cloud Platform location.
-const projectLocation = client.locationPath(projectId, computeRegion);
-
-// Classification type is assigned based on multilabel value.
-let classificationType = `MULTICLASS`;
-if (multilabel) {
-  classificationType = `MULTILABEL`;
-}
-
-// Set dataset name and metadata.
-const myDataset = {
-  displayName: datasetName,
-  textClassificationDatasetMetadata: {
-    classificationType: classificationType,
-  },
-};
-
-
-// ***
-// TODO: using await in this way did not work!!
-// Figure out what style to use for these functions so it is consistent!!
-// ***
-// **
-// *
-// Create a dataset with the dataset metadata in the region.
-// let dataset = await client.createDataset({parent: projectLocation, dataset: myDataset});
 //
-// if (dataset.err) {
-//   console.log('error'); }
-// else {
-//   // Display the dataset information.
-//   console.log(`Dataset name: ${dataset.name}`);
-//   console.log(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
-//   console.log(`Dataset display name: ${dataset.displayName}`);
-//   console.log(`Dataset example count: ${dataset.exampleCount}`);
-//   console.log(`Text classification type:`);
-//   console.log(
-//     `\t ${dataset.textClassificationDatasetMetadata.classificationType}`
-//   );
-//   console.log(`Dataset create time:`);
-//   console.log(`\tseconds: ${dataset.createTime.seconds}`);
-//   console.log(`\tnanos: ${dataset.createTime.nanos}`);
-//   }
-
-client
-  .createDataset({parent: projectLocation, dataset: myDataset})
-  .then(responses => {
-    const dataset = responses[0];
-
-    // Display the dataset information.
-    console.log(`Dataset name: ${dataset.name}`);
-    console.log(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
-    console.log(`Dataset display name: ${dataset.displayName}`);
-    console.log(`Dataset example count: ${dataset.exampleCount}`);
-    console.log(`Text classification type:`);
-    console.log(
-      `\t ${dataset.textClassificationDatasetMetadata.classificationType}`
-    );
-    console.log(`Dataset create time:`);
-    console.log(`\tseconds: ${dataset.createTime.seconds}`);
-    console.log(`\tnanos: ${dataset.createTime.nanos}`);
-  })
-  .catch(err => {
-    console.error(err);
-  });
-}
-
-
-
-
-
-async function importData(projectId, computeRegion, datasetId, path) {
-  // [START automl_natural_language_importDataset]
-  const automl = require(`@google-cloud/automl`);
-
-  const client = new automl.v1beta1.AutoMlClient();
-
-  // Get the full path of the dataset.
-  const datasetFullId = client.datasetPath(projectId, computeRegion, datasetId);
-
-  // Get the multiple Google Cloud Storage URIs.
-  const inputUris = path.split(`,`);
-  const inputConfig = {
-    gcsSource: {
-      inputUris: inputUris,
-    },
-  };
-
-  // Import the dataset from the input URI.
-  client
-    .importData({name: datasetFullId, inputConfig: inputConfig})
-    .then(responses => {
-      const operation = responses[0];
-      console.log(`Processing import...`);
-      return operation.promise();
-    })
-    .then(responses => {
-      // The final result of the operation.
-      if (responses[2].done === true) console.log(`Data imported.`);
-    })
-    .catch(err => {
-      console.error(err);
-    });
-}
+//
+//
+// async function createDataset(projectId, computeRegion, datasetName, multilabel) {
+// // [START automl_natural_language_createDataset]
+// const automl = require(`@google-cloud/automl`);
+//
+// const client = new automl.v1beta1.AutoMlClient();
+//
+//
+// // A resource that represents Google Cloud Platform location.
+// const projectLocation = client.locationPath(projectId, computeRegion);
+//
+// // Classification type is assigned based on multilabel value.
+// let classificationType = `MULTICLASS`;
+// if (multilabel) {
+//   classificationType = `MULTILABEL`;
+// }
+//
+// // Set dataset name and metadata.
+// const myDataset = {
+//   displayName: datasetName,
+//   textClassificationDatasetMetadata: {
+//     classificationType: classificationType,
+//   },
+// };
+//
+//
+// // ***
+// // TODO: using await in this way did not work!!
+// // Figure out what style to use for these functions so it is consistent!!
+// // ***
+// // **
+// // *
+// // Create a dataset with the dataset metadata in the region.
+// // let dataset = await client.createDataset({parent: projectLocation, dataset: myDataset});
+// //
+// // if (dataset.err) {
+// //   console.log('error'); }
+// // else {
+// //   // Display the dataset information.
+// //   console.log(`Dataset name: ${dataset.name}`);
+// //   console.log(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
+// //   console.log(`Dataset display name: ${dataset.displayName}`);
+// //   console.log(`Dataset example count: ${dataset.exampleCount}`);
+// //   console.log(`Text classification type:`);
+// //   console.log(
+// //     `\t ${dataset.textClassificationDatasetMetadata.classificationType}`
+// //   );
+// //   console.log(`Dataset create time:`);
+// //   console.log(`\tseconds: ${dataset.createTime.seconds}`);
+// //   console.log(`\tnanos: ${dataset.createTime.nanos}`);
+// //   }
+//
+// client
+//   .createDataset({parent: projectLocation, dataset: myDataset})
+//   .then(responses => {
+//     const dataset = responses[0];
+//
+//     // Display the dataset information.
+//     console.log(`Dataset name: ${dataset.name}`);
+//     console.log(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
+//     console.log(`Dataset display name: ${dataset.displayName}`);
+//     console.log(`Dataset example count: ${dataset.exampleCount}`);
+//     console.log(`Text classification type:`);
+//     console.log(
+//       `\t ${dataset.textClassificationDatasetMetadata.classificationType}`
+//     );
+//     console.log(`Dataset create time:`);
+//     console.log(`\tseconds: ${dataset.createTime.seconds}`);
+//     console.log(`\tnanos: ${dataset.createTime.nanos}`);
+//   })
+//   .catch(err => {
+//     console.error(err);
+//   });
+// }
+//
+//
+//
+//
+//
+// async function importData(projectId, computeRegion, datasetId, path) {
+//   // [START automl_natural_language_importDataset]
+//   const automl = require(`@google-cloud/automl`);
+//
+//   const client = new automl.v1beta1.AutoMlClient();
+//
+//   // Get the full path of the dataset.
+//   const datasetFullId = client.datasetPath(projectId, computeRegion, datasetId);
+//
+//   // Get the multiple Google Cloud Storage URIs.
+//   const inputUris = path.split(`,`);
+//   const inputConfig = {
+//     gcsSource: {
+//       inputUris: inputUris,
+//     },
+//   };
+//
+//   // Import the dataset from the input URI.
+//   client
+//     .importData({name: datasetFullId, inputConfig: inputConfig})
+//     .then(responses => {
+//       const operation = responses[0];
+//       console.log(`Processing import...`);
+//       return operation.promise();
+//     })
+//     .then(responses => {
+//       // The final result of the operation.
+//       if (responses[2].done === true) console.log(`Data imported.`);
+//     })
+//     .catch(err => {
+//       console.error(err);
+//     });
+// }
