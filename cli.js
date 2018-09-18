@@ -120,7 +120,8 @@ async function getIssueInfo(issue) {
     issueInfo.issueNumber = number;
     issueInfo.title = response.data.title;
     issueInfo.body = response.data.body;
-    const labelNames = separateLabels(response.data.labels);
+
+    const labelNames = response.data.labels.map(labelObject => labelObject.name)
     issueInfo.labels = labelNames;
 
     return issueInfo;
@@ -129,13 +130,6 @@ async function getIssueInfo(issue) {
   }
 }
 
-
-// extracts the value for the name key from each label object
-// and returns an array of all the issue's labels
-function separateLabels(labelsArray){
-  const newArray = labelsArray.map(labelObject => labelObject.name)
-  return newArray;
-}
 
 
 /**

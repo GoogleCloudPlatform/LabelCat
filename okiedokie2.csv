@@ -1,0 +1,285 @@
+"repoName","issueNumber","title","body","labels"
+"googleapis/gax-dotnet",93,"Work out why we can't run the GAX tests with parallelism","We've had to disable parallelism in GAX tests, as otherwise the FakeScheduler tests hang, although only on Travis... but it's not clear why. At some point, we should investigate that...
+","type: cleanup"
+"googleapis/gax-dotnet",145,"Verify proto behaviour when setting a field to an invalid value","Unit or integration test to verify that the proto library behaves as expected when setting a field to an invalid value.
+E.g. setting a repeated field with a null element should fail.","type: feature request"
+"googleapis/gax-dotnet",224,"Can't get the current Project ID when running on my dev machine.","https://github.com/googleapis/gax-dotnet/blob/3488c5b95f383e314d4a22390b599f07aa3057dc/src/Google.Api.Gax/Platform.cs#L543
+
+While I can get the Project ID when running on GAE, GCE or GKE I cannot use the same code to get the Project ID when running locally. That is what the `GOOGLE_CLOUD_PROJECT` environment variable is supposed to do for me.
+
+We should have a 4th type of platform details that allow the code to run unchanged when running on the developer machine with only the `GOOGLE_CLOUD_PROJECT` environment variable set.","type: feature request"
+"googleapis/gax-dotnet",227,"Examples for using server streaming retry?","Hi, I have generated a dotnet client for my gRPC service using artman/veneer toolkit, and have retries working for unary calls. I'm not quite grokking how retries should work for server streaming calls, although https://github.com/googleapis/gax-dotnet/commit/74a3598d7f71195712589cc53f277fa416d96a09 leads me to believe it should be possible.
+
+The code below doesn't retry because the exception is raised in the call to MoveNext on the ResponseStream, rather than the in the call to the `Application` endpoint.
+
+```
+var streamingResponse = streamsClient.Application(request);  // returns succesfully
+var responseStream = streamingResponse.ResponseStream;
+while (await responseStream.MoveNext())
+{
+    var response = responseStream.Current;
+    // boom -> Grpc.Core.RpcException: 'Status(StatusCode=Unavailable, Detail=""Connect Failed"")'
+}
+```
+
+I would expect this exception to be retried, given my RetryFilter predicate:
+```
+        public static Predicate<RpcException> RetryFilter { get; } =
+            RetrySettings.FilterForStatusCodes(StatusCode.DeadlineExceeded, StatusCode.Unavailable);
+```
+
+I've looked through several of the dotnet googleapis for an example, but haven't found anything. Am I using this code incorrectly, or is something misconfigured?
+
+Apologies if this should be on Stack Overflow or elsewhere, it just seemed I would be more likely to get a response here....","type: question"
+"googleapis/gax-dotnet",233,"monitored resource type ""container"" or ""gke_container""?","Hello,
+
+I tried to switch to using  `MonitoredResourceBuilder.FromPlatform()` now that [it's supposed to work for GKE]( https://github.com/googleapis/gax-dotnet/issues/209) but I'm getting this error:
+
+```
+....Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""Field timeSeries[0].resource.type had an invalid value of 
+""container"": Unrecognized resource name.""), dropping these. (108/108)
+```
+Should [`container` here](https://github.com/googleapis/gax-dotnet/blob/master/src/Google.Api.Gax.Grpc/MonitoredResourceBuilder.cs#L89) perhaps be `gke_container`?
+
+As an experiment, I used:
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+```
+
+But then I get another error!
+
+```
+Kaggle.Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""One or more TimeSeries could not be written: Unrecognized 
+region or location.: timeSeries[0]"")
+```
+
+Looking at the labels, the value for `zone` does look wrong (`projects/.../zones/us-...-d`), over what we used before (simply `us-...-d`):
+
+https://cloud.google.com/monitoring/api/resources#tag_gke_container isn't too useful in determining what this exactly should be, but I'd bet on the short name.
+
+=>
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+monitoredResource.Labels[""zone""] = ""us-...-d"";
+```
+
+which works (can write time series and labels look ok to me).
+
+My code looks a bit closer to what it should be, but I do feel I'm just trading one TODO for another here...
+",":rotating_light:"
+"googleapis/gax-dotnet",233,"monitored resource type ""container"" or ""gke_container""?","Hello,
+
+I tried to switch to using  `MonitoredResourceBuilder.FromPlatform()` now that [it's supposed to work for GKE]( https://github.com/googleapis/gax-dotnet/issues/209) but I'm getting this error:
+
+```
+....Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""Field timeSeries[0].resource.type had an invalid value of 
+""container"": Unrecognized resource name.""), dropping these. (108/108)
+```
+Should [`container` here](https://github.com/googleapis/gax-dotnet/blob/master/src/Google.Api.Gax.Grpc/MonitoredResourceBuilder.cs#L89) perhaps be `gke_container`?
+
+As an experiment, I used:
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+```
+
+But then I get another error!
+
+```
+Kaggle.Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""One or more TimeSeries could not be written: Unrecognized 
+region or location.: timeSeries[0]"")
+```
+
+Looking at the labels, the value for `zone` does look wrong (`projects/.../zones/us-...-d`), over what we used before (simply `us-...-d`):
+
+https://cloud.google.com/monitoring/api/resources#tag_gke_container isn't too useful in determining what this exactly should be, but I'd bet on the short name.
+
+=>
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+monitoredResource.Labels[""zone""] = ""us-...-d"";
+```
+
+which works (can write time series and labels look ok to me).
+
+My code looks a bit closer to what it should be, but I do feel I'm just trading one TODO for another here...
+","Type: bug"
+"googleapis/gax-dotnet",233,"monitored resource type ""container"" or ""gke_container""?","Hello,
+
+I tried to switch to using  `MonitoredResourceBuilder.FromPlatform()` now that [it's supposed to work for GKE]( https://github.com/googleapis/gax-dotnet/issues/209) but I'm getting this error:
+
+```
+....Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""Field timeSeries[0].resource.type had an invalid value of 
+""container"": Unrecognized resource name.""), dropping these. (108/108)
+```
+Should [`container` here](https://github.com/googleapis/gax-dotnet/blob/master/src/Google.Api.Gax.Grpc/MonitoredResourceBuilder.cs#L89) perhaps be `gke_container`?
+
+As an experiment, I used:
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+```
+
+But then I get another error!
+
+```
+Kaggle.Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""One or more TimeSeries could not be written: Unrecognized 
+region or location.: timeSeries[0]"")
+```
+
+Looking at the labels, the value for `zone` does look wrong (`projects/.../zones/us-...-d`), over what we used before (simply `us-...-d`):
+
+https://cloud.google.com/monitoring/api/resources#tag_gke_container isn't too useful in determining what this exactly should be, but I'd bet on the short name.
+
+=>
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+monitoredResource.Labels[""zone""] = ""us-...-d"";
+```
+
+which works (can write time series and labels look ok to me).
+
+My code looks a bit closer to what it should be, but I do feel I'm just trading one TODO for another here...
+","priority: p2"
+"googleapis/gax-dotnet",233,"monitored resource type ""container"" or ""gke_container""?","Hello,
+
+I tried to switch to using  `MonitoredResourceBuilder.FromPlatform()` now that [it's supposed to work for GKE]( https://github.com/googleapis/gax-dotnet/issues/209) but I'm getting this error:
+
+```
+....Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""Field timeSeries[0].resource.type had an invalid value of 
+""container"": Unrecognized resource name.""), dropping these. (108/108)
+```
+Should [`container` here](https://github.com/googleapis/gax-dotnet/blob/master/src/Google.Api.Gax.Grpc/MonitoredResourceBuilder.cs#L89) perhaps be `gke_container`?
+
+As an experiment, I used:
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+```
+
+But then I get another error!
+
+```
+Kaggle.Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""One or more TimeSeries could not be written: Unrecognized 
+region or location.: timeSeries[0]"")
+```
+
+Looking at the labels, the value for `zone` does look wrong (`projects/.../zones/us-...-d`), over what we used before (simply `us-...-d`):
+
+https://cloud.google.com/monitoring/api/resources#tag_gke_container isn't too useful in determining what this exactly should be, but I'd bet on the short name.
+
+=>
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+monitoredResource.Labels[""zone""] = ""us-...-d"";
+```
+
+which works (can write time series and labels look ok to me).
+
+My code looks a bit closer to what it should be, but I do feel I'm just trading one TODO for another here...
+",":rotating_light:"
+"googleapis/gax-dotnet",233,"monitored resource type ""container"" or ""gke_container""?","Hello,
+
+I tried to switch to using  `MonitoredResourceBuilder.FromPlatform()` now that [it's supposed to work for GKE]( https://github.com/googleapis/gax-dotnet/issues/209) but I'm getting this error:
+
+```
+....Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""Field timeSeries[0].resource.type had an invalid value of 
+""container"": Unrecognized resource name.""), dropping these. (108/108)
+```
+Should [`container` here](https://github.com/googleapis/gax-dotnet/blob/master/src/Google.Api.Gax.Grpc/MonitoredResourceBuilder.cs#L89) perhaps be `gke_container`?
+
+As an experiment, I used:
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+```
+
+But then I get another error!
+
+```
+Kaggle.Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""One or more TimeSeries could not be written: Unrecognized 
+region or location.: timeSeries[0]"")
+```
+
+Looking at the labels, the value for `zone` does look wrong (`projects/.../zones/us-...-d`), over what we used before (simply `us-...-d`):
+
+https://cloud.google.com/monitoring/api/resources#tag_gke_container isn't too useful in determining what this exactly should be, but I'd bet on the short name.
+
+=>
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+monitoredResource.Labels[""zone""] = ""us-...-d"";
+```
+
+which works (can write time series and labels look ok to me).
+
+My code looks a bit closer to what it should be, but I do feel I'm just trading one TODO for another here...
+","Type: bug"
+"googleapis/gax-dotnet",233,"monitored resource type ""container"" or ""gke_container""?","Hello,
+
+I tried to switch to using  `MonitoredResourceBuilder.FromPlatform()` now that [it's supposed to work for GKE]( https://github.com/googleapis/gax-dotnet/issues/209) but I'm getting this error:
+
+```
+....Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""Field timeSeries[0].resource.type had an invalid value of 
+""container"": Unrecognized resource name.""), dropping these. (108/108)
+```
+Should [`container` here](https://github.com/googleapis/gax-dotnet/blob/master/src/Google.Api.Gax.Grpc/MonitoredResourceBuilder.cs#L89) perhaps be `gke_container`?
+
+As an experiment, I used:
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+```
+
+But then I get another error!
+
+```
+Kaggle.Monitoring.Stackdriver.Publisher Failed to create 1 timeseries status
+Status(StatusCode=InvalidArgument, Detail=""One or more TimeSeries could not be written: Unrecognized 
+region or location.: timeSeries[0]"")
+```
+
+Looking at the labels, the value for `zone` does look wrong (`projects/.../zones/us-...-d`), over what we used before (simply `us-...-d`):
+
+https://cloud.google.com/monitoring/api/resources#tag_gke_container isn't too useful in determining what this exactly should be, but I'd bet on the short name.
+
+=>
+
+```
+var monitoredResource = MonitoredResourceBuilder.FromPlatform();
+monitoredResource.Type = ""gke_container"";
+monitoredResource.Labels[""zone""] = ""us-...-d"";
+```
+
+which works (can write time series and labels look ok to me).
+
+My code looks a bit closer to what it should be, but I do feel I'm just trading one TODO for another here...
+","priority: p2"
