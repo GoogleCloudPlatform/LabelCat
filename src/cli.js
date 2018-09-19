@@ -75,6 +75,7 @@ function makeCSV(issues, file) {
   fs.writeFileSync(file, csv);
 }
 
+
 module.exports = {
   retrieveIssues: retrieveIssues,
   getIssueInfo: getIssueInfo,
