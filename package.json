@@ -20,15 +20,15 @@
   },
   "preferGlobal": true,
   "bin": {
-    "labelcat": "cli.js"
+    "labelcat": "src/cli.js"
   },
   "engines": {
     "node": ">= 8.x"
   },
   "scripts": {
     "cover": "nyc --reporter=lcov mocha test/*.js && nyc report",
-    "lint": "eslint src/ samples/ system-test/ test/",
-    "prettier": "prettier --write src/*.js src/*/*.js test/*.js test/*/*.js system-test/*.js system-test/*/*.js",
+    "lint": "eslint src/ system-test/ test/",
+    "prettier": "prettier --write src/*.js test/*.js system-test/*.js",
     "system-test": "mocha system-test/*.js --timeout 600000",
     "test-no-cover": "mocha test/*.js",
     "test": "npm run cover"
