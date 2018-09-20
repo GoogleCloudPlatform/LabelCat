@@ -45,19 +45,22 @@ async function getIssueInfo(issue) {
   try {
     const response = await axios.get(url);
 
-    let issueInfo = {};
-
-    issueInfo.repoName = repoName;
-    issueInfo.issueNumber = number;
-    issueInfo.title = response.data.title;
-    issueInfo.body = response.data.body;
-
-    const labelNames = response.data.labels.map(
-      labelObject => labelObject.name
-    );
-    issueInfo.labels = labelNames;
-
-    return issueInfo;
+    // let issueInfo = {};
+    //
+    // issueInfo.repoName = repoName;
+    // issueInfo.issueNumber = number;
+    // issueInfo.title = response.data.title;
+    // issueInfo.body = response.data.body;
+    //
+    // const labelNames = response.data.labels.map(
+    //   labelObject => labelObject.name
+    // );
+    // issueInfo.labels = labelNames;
+    //
+    // return issueInfo;
+    console.log('******************')
+    console.log(response)
+    return response
   } catch (error) {
     console.log(error);
   }
@@ -79,7 +82,8 @@ function makeCSV(issues, file) {
 module.exports = {
   retrieveIssues: retrieveIssues,
   getIssueInfo: getIssueInfo,
-  makeCSV: makeCSV
+  makeCSV: makeCSV,
+  axios: axios,
 };
 
 if (module === require.main) {
