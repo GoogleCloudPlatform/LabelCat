@@ -20,15 +20,15 @@
   },
   "preferGlobal": true,
   "bin": {
-    "labelcat": "cli.js"
+    "labelcat": "bin/labelcat.js"
   },
   "engines": {
     "node": ">= 8.x"
   },
   "scripts": {
     "cover": "nyc --reporter=lcov mocha test/*.js && nyc report",
-    "lint": "eslint src/ samples/ system-test/ test/",
-    "prettier": "prettier --write src/*.js src/*/*.js test/*.js test/*/*.js system-test/*.js system-test/*/*.js",
+    "lint": "eslint src/ system-test/ test/",
+    "prettier": "prettier --write src/*.js test/*.js system-test/*.js",
     "system-test": "mocha system-test/*.js --timeout 600000",
     "test-no-cover": "mocha test/*.js",
     "test": "npm run cover"
@@ -38,6 +38,7 @@
     "axios": "^0.18.0",
     "csv-write-stream": "^2.0.0",
     "json2csv": "^4.2.1",
+    "loglevel": "^1.6.1",
     "yargs": "^12.0.2"
   },
   "devDependencies": {
@@ -50,6 +51,8 @@
     "mocha": "^5.2.0",
     "nyc": "^13.0.0",
     "power-assert": "^1.6.0",
-    "prettier": "^1.13.5"
+    "prettier": "^1.13.5",
+    "proxyquire": "^2.1.0",
+    "sinon": "^6.3.4"
   }
 }
