@@ -44,6 +44,7 @@ jobs:
             ./.circleci/npm-install-retry.js
           environment:
             NPM_CONFIG_PREFIX: /home/node/.npm-global
+      - run: cp defaultsettings.json settings.json
       - run: npm test
       - run: node_modules/.bin/codecov
   node10:
