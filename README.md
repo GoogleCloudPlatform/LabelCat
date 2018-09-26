@@ -23,6 +23,7 @@ animal, that's why you need LabelCat.
 
 1. In the GCP Console, go to the Manage resources page and select or create a new project.
    * [Go to the Manage Resources Page](https://console.cloud.google.com/cloud-resource-manager?_ga=2.144772156.-906058837.1536100239)
+1. Update settings.json to include your GCP Project ID and Compute Region.
 1. Make sure that billing is enabled for your project.
    * [Learn How to Enable Billing](https://cloud.google.com/billing/docs/how-to/modify-project)
 1. Enable the AutoML Natural Language APIs.
@@ -48,12 +49,26 @@ animal, that's why you need LabelCat.
     --member="serviceAccount:custom-vision@appspot.gserviceaccount.com" \
     --role="roles/storage.admin"
     ```
-1. Create a Google Cloud Storage bucket to store the documents that you will use to train your custom model.
+1. Create a Google Cloud Storage bucket to store the documents that you will use to train your custom model. The bucket name must be in the format: $PROJECT_ID-lcm. The following command creates a storage bucket in the us-central1 region named $PROJECT_ID-lcm:
+    ```
+    gsutil mb -p $PROJECT_ID -c regional -l $REGION_NAME gs://$PROJECT_ID-lcm/
+    ```
+## Usage
+### Retrieve Issues
+1. Create a .txt file with a single column list of GitHub repositories from which to collect issue data. The format should be ```:owner/:repository```
 
-The bucket name must be in the format: $PROJECT_ID-lcm. The following command creates a storage bucket in the us-central1 region named $PROJECT_ID-lcm.
-  ```
-  gsutil mb -p $PROJECT_ID -c regional -l $REGION_NAME gs://$PROJECT_ID-lcm/
-  ```
+   Example:
+   ```
+   GoogleCloudPlatform/google-cloud-node
+   GoogleCloudPlatform/google-cloud-java
+   GoogleCloudPlatform/google-cloud-python
+   ```
+1. From the project folder, run the retrieveIssues command with the path of the repository list file and path to a location to save the resulting .csv file.
+
+    Example: ``` labelcat retrieveIssues repos.txt issues.csv ```
+1. Upload the resulting .csv file to your Google Cloud Storage Bucket:
+
+    ```gsutil cp [LOCAL_OBJECT_LOCATION] gs://[DESTINATION_BUCKET_NAME]/ ```
 ## Contributing
 
 See [CONTRIBUTING][3].
