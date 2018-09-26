@@ -22,7 +22,7 @@ animal, that's why you need LabelCat.
 ### Configure your project environment
 
 1. In the GCP Console, go to the Manage resources page and select or create a new project.
-⋅⋅* [Go to the Manage Resources Page](https://console.cloud.google.com/cloud-resource-manager?_ga=2.144772156.-906058837.1536100239)
+- [Go to the Manage Resources Page](https://console.cloud.google.com/cloud-resource-manager?_ga=2.144772156.-906058837.1536100239)
   
 ## Contributing
 
