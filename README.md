@@ -49,9 +49,9 @@ animal, that's why you need LabelCat.
     --role="roles/storage.admin"
     ```
 1. Create a Google Cloud Storage bucket to store the documents that you will use to train your custom model. The bucket name must be in the format: $PROJECT_ID-lcm. The following command creates a storage bucket in the us-central1 region named $PROJECT_ID-lcm.
-  ```
-  gsutil mb -p $PROJECT_ID -c regional -l $REGION_NAME gs://$PROJECT_ID-lcm/
-  ```
+    ```
+    gsutil mb -p $PROJECT_ID -c regional -l $REGION_NAME gs://$PROJECT_ID-lcm/
+    ```
 ## Contributing
 
 See [CONTRIBUTING][3].
