@@ -1,4 +1,5 @@
-const cli = require('../src/util.js');
+const util = require('../src/util.js');
+const settings = require('../settings.json');
 const fs = require('fs');
 const mocha = require('mocha');
 const describe = mocha.describe;
@@ -20,7 +21,7 @@ describe('makeCSV()', function() {
     ];
 
     const path = __dirname + '/' + 'testCSV.csv';
-    cli.makeCSV(issues, path);
+    util.makeCSV(issues, path);
 
     let exists = true;
     try {
@@ -41,11 +42,11 @@ describe('makeCSV()', function() {
 });
 
 describe('retrieveIssues', () => {
-  let cli, axiosMock;
+  let util, axiosMock;
 
   beforeEach(() => {
     axiosMock = {get: sinon.stub()};
-    cli = proxyquire('../src/util.js', {axios: axiosMock});
+    util = proxyquire('../src/util.js', {axios: axiosMock});
   });
 
   it('should pass new issue object to makeCSV', async () => {
@@ -62,7 +63,7 @@ describe('retrieveIssues', () => {
     const expectedResponse = Promise.resolve({data: issues});
     axiosMock.get.returns(expectedResponse);
 
-    const result = await cli.retrieveIssues('test/test_repos.txt', path);
+    const result = await util.retrieveIssues('test/test_repos.txt', path);
 
     // update issues to match updated labels value
     issues[0].labels = ['type: bug'];
@@ -82,7 +83,7 @@ describe('retrieveIssues', () => {
     });
     axiosMock.get.returns(expectedResponse);
 
-    await cli.retrieveIssues('test/test_repos.txt', path);
+    await util.retrieveIssues('test/test_repos.txt', path);
 
     sinon.assert.calledOnce(axiosMock.get);
   });
@@ -108,7 +109,7 @@ describe('getIssueInfo()', function() {
       labels: ['type: bug'],
     };
 
-    const result = await cli.getIssueInfo(originalIssue);
+    const result = await util.getIssueInfo(originalIssue);
 
     assert.strictEqual(
       Object.keys(result).length,
@@ -124,7 +125,66 @@ describe('getIssueInfo()', function() {
       body: 'issue body',
     };
 
-    let result = await cli.getIssueInfo(badIssue);
+    let result = await util.getIssueInfo(badIssue);
     assert(result === undefined);
+  });
+});
+
+describe('createDataset()', function() {
+  const projectId = settings.projectId;
+  const computeRegion = settings.computeRegion;
+  const datasetName = 'testSet';
+  const multiLabel = 'false';
+
+  it('should create a Google AutoML Natural Language dataset', function() {
+    const location = sinon.spy();
+    const create = sinon.stub().returns([
+      {
+        name: 'dataset/location/378646',
+        displayName: 'testSet',
+        exampleCount: 0,
+        textClassificationDatasetMetadata: {classificationType: 'Single-label'},
+        createTime: {seconds: '1537993131', nanos: 193890000},
+      },
+    ]);
+
+    const mockClient = sinon.stub().returns({
+      locationPath: location,
+      createDataset: create,
+    });
+
+    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const util = proxyquire('../src/util.js', {
+      '@google-cloud/automl': autoMlMock,
+    });
+
+    util.createDataset(projectId, computeRegion, datasetName, multiLabel);
+    sinon.assert.calledOnce(location);
+    assert(location.calledWith(projectId, computeRegion));
+  });
+  it('should throw an error', function() {
+    const location = sinon.spy();
+    const create = sinon.stub().returns([
+      {
+        err: 'error',
+        name: 'dataset/location/378646',
+        displayName: 'testSet',
+        exampleCount: 0,
+        textClassificationDatasetMetadata: {classificationType: 'Single-label'},
+        createTime: {seconds: '1537993131', nanos: 193890000},
+      },
+    ]);
+
+    const mockClient = sinon.stub().returns({
+      locationPath: location,
+      createDataset: create,
+    });
+
+    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const util = proxyquire('../src/util.js', {
+      '@google-cloud/automl': autoMlMock,
+    });
+
+    util.createDataset(projectId, computeRegion, datasetName, multiLabel);
   });
 });

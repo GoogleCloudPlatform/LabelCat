@@ -85,8 +85,72 @@ function makeCSV(issues, file) {
   }
 }
 
+/**
+ * Create a Google AutoML Natural Language dataset
+ * @param {string} projectId
+ * @param {string} computeRegion
+ * @param {string} datasetName
+ * @param {string} multiLabel
+
+ */
+async function createDataset(
+  projectId,
+  computeRegion,
+  datasetName,
+  multilabel
+) {
+  // [START automl_natural_language_createDataset]
+  const automl = require(`@google-cloud/automl`);
+
+  const client = new automl.v1beta1.AutoMlClient();
+
+  // A resource that represents Google Cloud Platform location.
+
+  const projectLocation = client.locationPath(projectId, computeRegion);
+
+  // Classification type is assigned based on multilabel value.
+  let classificationType = `MULTICLASS`;
+  if (multilabel === 'true') {
+    classificationType = `MULTILABEL`;
+  }
+
+  // Set dataset name and metadata.
+  const myDataset = {
+    displayName: datasetName,
+    textClassificationDatasetMetadata: {
+      classificationType: classificationType,
+    },
+  };
+
+  // // Create a dataset with the dataset metadata in the region.
+  let response = await client.createDataset({
+    parent: projectLocation,
+    dataset: myDataset,
+  });
+
+  let dataset = response[0];
+
+  if (dataset.err) {
+    log.error('ERROR: DATASET COULD NOT BE CREATED. PLEASE CHECK PROJECT ENVIRONMENT CONFIGURATION.');
+  } else {
+    // Display the dataset information.
+    log.warn(`Dataset name: ${dataset.name}`);
+    log.warn(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
+    log.warn(`Dataset display name: ${dataset.displayName}`);
+    log.warn(`Dataset example count: ${dataset.exampleCount}`);
+    log.warn(`Text classification type:`);
+    log.warn(
+      `\t ${dataset.textClassificationDatasetMetadata.classificationType}`
+    );
+    log.warn(`Dataset create time:`);
+    log.warn(`\tseconds: ${dataset.createTime.seconds}`);
+    log.warn(`\tnanos: ${dataset.createTime.nanos}`);
+  }
+}
+
 module.exports = {
   retrieveIssues: retrieveIssues,
   getIssueInfo: getIssueInfo,
   makeCSV: makeCSV,
+  createDataset: createDataset,
 };
