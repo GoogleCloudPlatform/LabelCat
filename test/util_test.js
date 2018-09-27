@@ -194,7 +194,7 @@ describe('importData()', function() {
 
   it('should import data into AutoML NL dataset', function() {
     const path = sinon.spy();
-    const imports = sinon.stub().returns({status: 'done'});
+    const imports = sinon.stub().returns();
 
     const mockClient = sinon.stub().returns({
       datasetPath: path,
