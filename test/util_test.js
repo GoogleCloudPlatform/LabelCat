@@ -12,9 +12,7 @@ describe('makeCSV()', function() {
   it('should create a csv of issues', function() {
     const issues = [
       {
-        repoName: 'a-repo',
-        title: 'info',
-        body: 'more info',
+        text: 'more info',
         labels: ['type: bug'],
       },
     ];
@@ -50,8 +48,7 @@ describe('retrieveIssues', () => {
 
   it('should pass new issue object to makeCSV', async () => {
     let issues = [
-      {
-        title: 'issue',
+      { title: 'issue',
         body: 'details',
         labels: [{name: 'type: bug'}],
       },
@@ -69,7 +66,6 @@ describe('retrieveIssues', () => {
     assert(result.length === 1);
     assert(result[0].text === 'issue details');
   });
-
   it('should throw an error', async () => {
     const path = __dirname + '/' + 'test.csv';
 
@@ -209,5 +205,21 @@ describe('importData()', function() {
     sinon.assert.calledOnce(path);
     assert(path.calledWith(projectId, computeRegion, datasetId));
     sinon.assert.calledOnce(imports);
+  });
+  it('should throw an error', function() {
+    const path = sinon.spy();
+    const imports = sinon.stub().throws();
+
+    const mockClient = sinon.stub().returns({
+      datasetPath: path,
+      importData: imports,
+    });
+
+    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const util = proxyquire('../src/util.js', {
+      '@google-cloud/automl': autoMlMock,
+    });
+
+    util.importData(projectId, computeRegion, datasetId, file);
   });
 });
