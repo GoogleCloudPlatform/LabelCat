@@ -48,7 +48,8 @@ describe('retrieveIssues', () => {
 
   it('should pass new issue object to makeCSV', async () => {
     let issues = [
-      { title: 'issue',
+      {
+        title: 'issue',
         body: 'details',
         labels: [{name: 'type: bug'}],
       },
