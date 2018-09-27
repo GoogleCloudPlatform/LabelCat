@@ -52,7 +52,6 @@ describe('retrieveIssues', () => {
   it('should pass new issue object to makeCSV', async () => {
     let issues = [
       {
-        repository_url: 'http://',
         title: 'issue',
         body: 'details',
         labels: [{name: 'type: bug'}],
@@ -69,7 +68,7 @@ describe('retrieveIssues', () => {
     issues[0].labels = ['type: bug'];
 
     assert(result.length === 1);
-    assert(result[0].body === 'details');
+    assert(result[0].text === 'issue details');
   });
 
   it('should throw an error', async () => {
@@ -103,9 +102,7 @@ describe('getIssueInfo()', function() {
     };
 
     const returnedIssue = {
-      repository_url: 'http://github.com/fakerepo',
-      title: 'issue title',
-      body: 'issue body',
+      text: 'issue body',
       labels: ['type: bug'],
     };
 
@@ -186,5 +183,32 @@ describe('createDataset()', function() {
     });
 
     util.createDataset(projectId, computeRegion, datasetName, multiLabel);
+  });
+});
+
+describe('importData()', function() {
+  const projectId = settings.projectId;
+  const computeRegion = settings.computeRegion;
+  const datasetId = '123TEST4567';
+  const file = 'gs://testbucket-lcm/testIssues.csv';
+
+  it('should import data into AutoML NL dataset', function() {
+    const path = sinon.spy();
+    const imports = sinon.stub().returns({status: 'done'});
+
+    const mockClient = sinon.stub().returns({
+      datasetPath: path,
+      importData: imports,
+    });
+
+    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const util = proxyquire('../src/util.js', {
+      '@google-cloud/automl': autoMlMock,
+    });
+
+    util.importData(projectId, computeRegion, datasetId, file);
+    sinon.assert.calledOnce(path);
+    assert(path.calledWith(projectId, computeRegion, datasetId));
+    sinon.assert.calledOnce(imports);
   });
 });

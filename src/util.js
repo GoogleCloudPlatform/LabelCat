@@ -5,6 +5,7 @@ const fs = require('fs');
 const settings = require('../settings.json'); // eslint-disable-line node/no-missing-require
 const Json2csvParser = require('json2csv').Parser;
 const log = require('loglevel');
+log.setLevel('info');
 /**
  * Take a filepath to a json object of issues
  * and a filename to save the resulting issue data,
@@ -43,7 +44,7 @@ async function retrieveIssues(data) {
     }
     return issueResults;
   } catch (error) {
-    log.warn(
+    log.error(
       'ERROR RETRIEVING ISSUES FROM GITHUB. PLEASE CHECK REPOSITORY LIST, GITHUB CLIENT ID, & GITHUB CLIENT SECRET.'
     );
   }
@@ -56,14 +57,14 @@ async function retrieveIssues(data) {
  */
 function getIssueInfo(issue) {
   try {
+    let text = issue.title + ' ' + issue.body;
+
     return {
-      repository_url: issue.repository_url,
-      title: issue.title,
-      body: issue.body,
+      text: text,
       labels: issue.labels.map(labelObject => labelObject.name),
     };
   } catch (error) {
-    log.warn(
+    log.error(
       'ERROR EXTRACTING ISSUE REPOSITORY URL, NUMBER, TITLE, BODY, & LABELS FROM GITHUB ISSUE OBJECT.'
     );
   }
@@ -76,12 +77,12 @@ function getIssueInfo(issue) {
  */
 function makeCSV(issues, file) {
   try {
-    const fields = ['repositoryUrl', 'title', 'body', 'labels'];
+    const fields = ['text', 'labels'];
     const json2csvParser = new Json2csvParser({fields, unwind: 'labels'});
     const csv = json2csvParser.parse(issues);
     fs.appendFileSync(file, csv);
   } catch (error) {
-    log.warn('ERROR WRITING ISSUES DATA TO CSV.');
+    log.error('ERROR WRITING ISSUES DATA TO CSV.');
   }
 }
 
@@ -91,7 +92,6 @@ function makeCSV(issues, file) {
  * @param {string} computeRegion
  * @param {string} datasetName
  * @param {string} multiLabel
-
  */
 async function createDataset(
   projectId,
@@ -109,9 +109,9 @@ async function createDataset(
   const projectLocation = client.locationPath(projectId, computeRegion);
 
   // Classification type is assigned based on multilabel value.
-  let classificationType = `MULTICLASS`;
-  if (multilabel === 'true') {
-    classificationType = `MULTILABEL`;
+  let classificationType = `MULTILABEL`;
+  if (multilabel === 'false') {
+    classificationType = `MULTICLASS`;
   }
 
   // Set dataset name and metadata.
@@ -131,20 +131,60 @@ async function createDataset(
   let dataset = response[0];
 
   if (dataset.err) {
-    log.error('ERROR: DATASET COULD NOT BE CREATED. PLEASE CHECK PROJECT ENVIRONMENT CONFIGURATION.');
+    log.error(
+      'ERROR: DATASET COULD NOT BE CREATED. PLEASE CHECK PROJECT ENVIRONMENT CONFIGURATION.'
+    );
   } else {
     // Display the dataset information.
-    log.warn(`Dataset name: ${dataset.name}`);
-    log.warn(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
-    log.warn(`Dataset display name: ${dataset.displayName}`);
-    log.warn(`Dataset example count: ${dataset.exampleCount}`);
-    log.warn(`Text classification type:`);
-    log.warn(
+    log.info(`Dataset name: ${dataset.name}`);
+    log.info(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
+    log.info(`Dataset display name: ${dataset.displayName}`);
+    log.info(`Dataset example count: ${dataset.exampleCount}`);
+    log.info(`Text classification type:`);
+    log.info(
       `\t ${dataset.textClassificationDatasetMetadata.classificationType}`
     );
-    log.warn(`Dataset create time:`);
-    log.warn(`\tseconds: ${dataset.createTime.seconds}`);
-    log.warn(`\tnanos: ${dataset.createTime.nanos}`);
+    log.info(`Dataset create time:`);
+    log.info(`\tseconds: ${dataset.createTime.seconds}`);
+    log.info(`\tnanos: ${dataset.createTime.nanos}`);
+  }
+}
+
+/**
+ * Import data into Google AutoML NL dataset
+ * @param {string} projectId
+ * @param {string} computeRegion
+ * @param {string} datasetId
+ * @param {string} path
+ */
+async function importData(projectId, computeRegion, datasetId, path) {
+  // [START automl_natural_language_importDataset]
+  const automl = require(`@google-cloud/automl`);
+
+  const client = new automl.v1beta1.AutoMlClient();
+
+  // Get the full path of the dataset.
+  const datasetFullId = client.datasetPath(projectId, computeRegion, datasetId);
+
+  // Get the multiple Google Cloud Storage URIs.
+  const inputUris = path.split(`,`);
+  const inputConfig = {
+    gcsSource: {
+      // change to just path
+      inputUris: inputUris,
+    },
+  };
+
+  // Import the  dataset from the input URI.
+  try {
+    await client.importData({name: datasetFullId, inputConfig: inputConfig});
+    log.info(
+      `Processing import. Check AutoML dashboard for status of your import.`
+    );
+  } catch (error) {
+    log.error(
+      'ERROR: DATA COULD NOT BE IMPORTED. PLEASE CHECK PROJECT ID, COMPUTE REGION, DATASET ID, AND FILE PATH. \n Refer to AutoML dashboard for dataset status.'
+    );
   }
 }
 
@@ -153,4 +193,5 @@ module.exports = {
   getIssueInfo: getIssueInfo,
   makeCSV: makeCSV,
   createDataset: createDataset,
+  importData: importData,
 };

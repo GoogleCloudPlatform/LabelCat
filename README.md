@@ -53,6 +53,10 @@ animal, that's why you need LabelCat.
     ```
     gsutil mb -p $PROJECT_ID -c regional -l $REGION_NAME gs://$PROJECT_ID-lcm/
     ```
+    Example:
+    ```
+    gsutil mb -p example-project -c regional -1 us-central1 gs://example-project-lcm/
+    ```
 ## Usage
 ### Retrieve Issues
 1. Create a .txt file with a single column list of GitHub repositories from which to collect issue data. The format should be ```:owner/:repository```
@@ -69,6 +73,17 @@ animal, that's why you need LabelCat.
 1. Upload the resulting .csv file to your Google Cloud Storage Bucket:
 
     ```gsutil cp [LOCAL_OBJECT_LOCATION] gs://[DESTINATION_BUCKET_NAME]/ ```
+
+### Create Dataset
+1. From the project folder, run the createDataset command with the name of the dataset to create.
+
+    Example: ```labelcat createDataset TestData```
+
+### Import Data
+1. Run importData using the Dataset ID returned by the createDataset command and the URI to the issue data .csv
+
+     Example: ```labelcat importData gs://example-project-lcm/issues.csv 123ABCD456789```
+
 ## Contributing
 
 See [CONTRIBUTING][3].
