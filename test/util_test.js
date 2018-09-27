@@ -1,5 +1,4 @@
 const util = require('../src/util.js');
-const settings = require('../settings.json');
 const fs = require('fs');
 const mocha = require('mocha');
 const describe = mocha.describe;
@@ -128,8 +127,8 @@ describe('getIssueInfo()', function() {
 });
 
 describe('createDataset()', function() {
-  const projectId = settings.projectId;
-  const computeRegion = settings.computeRegion;
+  const projectId = 'test-project';
+  const computeRegion = 'us-central1';
   const datasetName = 'testSet';
   const multiLabel = 'false';
 
@@ -187,8 +186,8 @@ describe('createDataset()', function() {
 });
 
 describe('importData()', function() {
-  const projectId = settings.projectId;
-  const computeRegion = settings.computeRegion;
+  const projectId = 'test-project';
+  const computeRegion = 'us-central1';
   const datasetId = '123TEST4567';
   const file = 'gs://testbucket-lcm/testIssues.csv';
 
