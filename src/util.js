@@ -27,11 +27,11 @@ async function retrieveIssues(data) {
 
     // make API call to retrieve issues for each repository in the array
     for (let i in reposArray) {
-      let repo = reposArray[i];
+      const repo = reposArray[i];
       const githubClientID = settings.githubClientID;
       const githubClientSecret = settings.githubClientSecret;
 
-      let url = `https://api.github.com/repos/${repo}/issues?state=all&per_page=100&client_id=${githubClientID}&client_secret=${githubClientSecret}`;
+      const url = `https://api.github.com/repos/${repo}/issues?state=all&per_page=100&client_id=${githubClientID}&client_secret=${githubClientSecret}`;
 
       const response = await axios.get(url);
 
@@ -57,7 +57,7 @@ async function retrieveIssues(data) {
  */
 function getIssueInfo(issue) {
   try {
-    let text = issue.title + ' ' + issue.body;
+    const text = issue.title + ' ' + issue.body;
 
     return {
       text: text,
@@ -97,20 +97,15 @@ async function createDataset(
   projectId,
   computeRegion,
   datasetName,
-  multilabel
+  multiClass
 ) {
-  // [START automl_natural_language_createDataset]
   const automl = require(`@google-cloud/automl`);
-
   const client = new automl.v1beta1.AutoMlClient();
-
-  // A resource that represents Google Cloud Platform location.
-
   const projectLocation = client.locationPath(projectId, computeRegion);
 
-  // Classification type is assigned based on multilabel value.
+  // Classification type is assigned based on multiClass value.
   let classificationType = `MULTILABEL`;
-  if (multilabel === 'false') {
+  if (multiClass) {
     classificationType = `MULTICLASS`;
   }
 
@@ -122,20 +117,18 @@ async function createDataset(
     },
   };
 
-  // // Create a dataset with the dataset metadata in the region.
-  let response = await client.createDataset({
+  const response = await client.createDataset({
     parent: projectLocation,
     dataset: myDataset,
   });
 
-  let dataset = response[0];
+  const dataset = response[0];
 
   if (dataset.err) {
     log.error(
       'ERROR: DATASET COULD NOT BE CREATED. PLEASE CHECK PROJECT ENVIRONMENT CONFIGURATION.'
     );
   } else {
-    // Display the dataset information.
     log.info(`Dataset name: ${dataset.name}`);
     log.info(`Dataset id: ${dataset.name.split(`/`).pop(-1)}`);
     log.info(`Dataset display name: ${dataset.displayName}`);
@@ -158,24 +151,20 @@ async function createDataset(
  * @param {string} path
  */
 async function importData(projectId, computeRegion, datasetId, path) {
-  // [START automl_natural_language_importDataset]
   const automl = require(`@google-cloud/automl`);
-
   const client = new automl.v1beta1.AutoMlClient();
 
   // Get the full path of the dataset.
   const datasetFullId = client.datasetPath(projectId, computeRegion, datasetId);
 
-  // Get the multiple Google Cloud Storage URIs.
+  // Get the Google Cloud Storage URIs.
   const inputUris = path.split(`,`);
   const inputConfig = {
     gcsSource: {
-      // change to just path
       inputUris: inputUris,
     },
   };
 
-  // Import the  dataset from the input URI.
   try {
     await client.importData({name: datasetFullId, inputConfig: inputConfig});
     log.info(

@@ -17,18 +17,25 @@ require(`yargs`)
     }
   )
   .command(
-    `createDataset <datasetName> [multilabel]`,
+    `createDataset <datasetName>`,
     `Create a new Google AutoML NL dataset with the specified name.`,
     {},
     opts => {
       const projectId = settings.projectId;
       const computeRegion = settings.computeRegion;
       const datasetName = opts.datasetName;
-      const multiLabel = opts.multilabel;
 
-      util.createDataset(projectId, computeRegion, datasetName, multiLabel)
+      util.createDataset(
+        projectId,
+        computeRegion,
+        datasetName,
+        opts.multiClass
+      );
     }
   )
+  .option('multiClass', {
+    alias: 'm'
+  })
   .command(
     `importData <issuesDataPath> <datasetId>`,
     `Import the GitHub issues data from Google Cloud Storage bucket into the Google AutoML NL dataset by specifying the file's path in the bucket and the dataset ID.`,
