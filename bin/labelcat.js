@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const util = require('../src/util.js');
-const settings = require('../settings.json');
+const settings = require('../settings.json'); // eslint-disable-line node/no-missing-require
 
 require(`yargs`)
   .demand(1)
@@ -19,8 +19,12 @@ require(`yargs`)
   .command(
     `createDataset <datasetName>`,
     `Create a new Google AutoML NL dataset with the specified name.`,
-    function(command) {
-      command.options({multiclass: {alias: 'm'}});
+    {
+      multiclass: {
+        alias: 'm',
+        type: 'boolean',
+        description: 'Enables multi-class support.',
+      },
     },
     opts => {
       const projectId = settings.projectId;
