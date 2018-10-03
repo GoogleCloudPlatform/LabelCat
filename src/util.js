@@ -4,8 +4,15 @@ const axios = require('axios');
 const fs = require('fs');
 const settings = require('../settings.json'); // eslint-disable-line node/no-missing-require
 const Json2csvParser = require('json2csv').Parser;
+const octokit = require('@octokit/rest')()
 const log = require('loglevel');
 log.setLevel('info');
+
+octokit.authenticate({
+  type: 'oauth',
+  key: settings.githubClientID,
+  secret: settings.githubClientSecret
+})
 /**
  * Take a filepath to a json object of issues
  * and a filename to save the resulting issue data,
@@ -15,6 +22,7 @@ log.setLevel('info');
  */
 async function retrieveIssues(data) {
   // read each line of a .txt file of repo names (:/owner/:repo)
+  let repo;
   try {
     const reposArray = fs
       .readFileSync(data)
@@ -27,28 +35,34 @@ async function retrieveIssues(data) {
 
     // make API call to retrieve issues for each repository in the array
     for (let i in reposArray) {
-      const repo = reposArray[i];
-      const githubClientID = settings.githubClientID;
-      const githubClientSecret = settings.githubClientSecret;
+      const owner = reposArray[i].match(/^[^/]+/);
+      repo = reposArray[i].match(/[^/]*$/);
 
-      const url = `https://api.github.com/repos/${repo}/issues?state=all&per_page=100&client_id=${githubClientID}&client_secret=${githubClientSecret}`;
-
-      const response = await axios.get(url);
-
-      const issuesArray = response.data;
-      const results = issuesArray.map(issue => getIssueInfo(issue));
-
-      results.forEach(function(issue) {
-        issueResults.push(issue);
-      });
+      await paginate(octokit.issues.getForRepo, repo, owner).then(data => {
+        const results = data.map(issue => getIssueInfo(issue));
+        results.forEach(function(issue) {
+          issueResults.push(issue);
+        });
+      })
     }
     return issueResults;
   } catch (error) {
     log.error(
-      'ERROR RETRIEVING ISSUES FROM GITHUB. PLEASE CHECK REPOSITORY LIST, GITHUB CLIENT ID, & GITHUB CLIENT SECRET.'
+      `ERROR RETRIEVING ISSUES FROM GITHUB. REPOSITORY: ${repo}. PLEASE CHECK REPOSITORY LIST, GITHUB CLIENT ID, & GITHUB CLIENT SECRET. ERROR: ${error}`
     );
   }
 }
+
+async function paginate(method, repo, owner) {
+  let response = await method({owner: owner, repo: repo, per_page: 100});
+  let {data} = response
+  while (octokit.hasNextPage(response)) {
+    response = await octokit.getNextPage(response)
+    data = data.concat(response.data)
+  }
+  return data
+}
+
 
 /**
  * Extract relevant issue information
@@ -58,11 +72,16 @@ async function retrieveIssues(data) {
 function getIssueInfo(issue) {
   try {
     const text = issue.title + ' ' + issue.body;
+    const labels = issue.labels.map(labelObject => labelObject.name)
+    let data = {}
 
-    return {
-      text: text,
-      labels: issue.labels.map(labelObject => labelObject.name),
-    };
+    data.text = text;
+    for(let i in labels) {
+      let key = `label${i}`
+      data[key] = labels[i]
+    }
+
+    return data
   } catch (error) {
     log.error(
       'ERROR EXTRACTING ISSUE REPOSITORY URL, NUMBER, TITLE, BODY, & LABELS FROM GITHUB ISSUE OBJECT.'
@@ -77,13 +96,20 @@ function getIssueInfo(issue) {
  */
 function makeCSV(issues, file) {
   try {
-    const fields = ['text', 'labels'];
-    const json2csvParser = new Json2csvParser({fields, unwind: 'labels'});
-    const csv = json2csvParser.parse(issues);
+    const json2csvParser = new Json2csvParser({header: false});
+    let csv = json2csvParser.parse(issues);
+    csv = csv.replace(/(,){2,}/g, ' ');
     fs.appendFileSync(file, csv);
   } catch (error) {
     log.error('ERROR WRITING ISSUES DATA TO CSV.');
   }
+}
+
+function fix(csv, saveAs) {
+  let data = fs.readFileSync(csv).toString();
+
+  data = data.replace(/(,){2,}/g, ' ');
+  fs.appendFileSync(saveAs, data);
 }
 
 /**
@@ -183,4 +209,5 @@ module.exports = {
   makeCSV: makeCSV,
   createDataset: createDataset,
   importData: importData,
+  fix: fix,
 };
