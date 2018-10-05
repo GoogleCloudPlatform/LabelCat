@@ -1,18 +1,18 @@
 'use strict';
 
-const axios = require('axios');
 const fs = require('fs');
 const settings = require('../settings.json'); // eslint-disable-line node/no-missing-require
-const Json2csvParser = require('json2csv').Parser;
-const octokit = require('@octokit/rest')()
+const octokit = require('@octokit/rest')();
 const log = require('loglevel');
+const Papa = require('papaparse');
 log.setLevel('info');
 
 octokit.authenticate({
   type: 'oauth',
   key: settings.githubClientID,
-  secret: settings.githubClientSecret
-})
+  secret: settings.githubClientSecret,
+});
+
 /**
  * Take a filepath to a json object of issues
  * and a filename to save the resulting issue data,
@@ -21,9 +21,13 @@ octokit.authenticate({
  * @param {string} file
  */
 async function retrieveIssues(data) {
-  // read each line of a .txt file of repo names (:/owner/:repo)
+  log.info('RETRIEVING ISSUES...');
   let repo;
+  // read each line of a .txt file of repo names (:/owner/:repo)
   try {
+    let issueResults = [];
+    let labelCount = {};
+
     const reposArray = fs
       .readFileSync(data)
       .toString()
@@ -31,20 +35,22 @@ async function retrieveIssues(data) {
       .map(repo => repo.trim())
       .filter(Boolean);
 
-    let issueResults = [];
-
     // make API call to retrieve issues for each repository in the array
     for (let i in reposArray) {
       const owner = reposArray[i].match(/^[^/]+/);
       repo = reposArray[i].match(/[^/]*$/);
 
       await paginate(octokit.issues.getForRepo, repo, owner).then(data => {
-        const results = data.map(issue => getIssueInfo(issue));
+        const results = data.map(issue => getIssueInfo(issue, labelCount));
         results.forEach(function(issue) {
           issueResults.push(issue);
         });
-      })
+      });
     }
+
+    issueResults = cleanLabels(issueResults, labelCount);
+    log.info(`ISSUES RETRIEVED: ${issueResults.length}`);
+
     return issueResults;
   } catch (error) {
     log.error(
@@ -54,34 +60,74 @@ async function retrieveIssues(data) {
 }
 
 async function paginate(method, repo, owner) {
-  let response = await method({owner: owner, repo: repo, per_page: 100});
-  let {data} = response
+  let response = await method({
+    owner: owner,
+    repo: repo,
+    per_page: 100,
+    state: 'all',
+  });
+  let {data} = response;
   while (octokit.hasNextPage(response)) {
-    response = await octokit.getNextPage(response)
-    data = data.concat(response.data)
+    response = await octokit.getNextPage(response);
+    data = data.concat(response.data);
   }
-  return data
+  return data;
 }
 
+/**
+ * remove labels that occur less than 100 times in dataset
+ *
+ * @param {array} issues
+ * @param {object} labelCount
+ */
+function cleanLabels(issues, labelCount) {
+  let data = [];
+  for (let i = issues.length - 1; i >= 0; i--) {
+    let issue = issues[i];
+
+    issue.labels = issue.labels.filter(function(value) {
+      if (labelCount[value] > 99) {
+        return value;
+      }
+    });
+
+    if (issue.labels.length === 0 || !issue.text.match(/[^\s]/)) {
+      issues.splice(i, 1);
+    } else {
+      // give each label a key to ease csv writing format
+      for (let k in issue.labels) {
+        let key = `label${k}`;
+        issue[key] = issue.labels[k];
+      }
+
+      delete issue.labels;
+      data.push(issue);
+    }
+  }
+  return data;
+}
 
 /**
  * Extract relevant issue information
  *
  * @param {object} issue - GitHub repository issue
  */
-function getIssueInfo(issue) {
+function getIssueInfo(issue, labelCount) {
   try {
     const text = issue.title + ' ' + issue.body;
-    const labels = issue.labels.map(labelObject => labelObject.name)
-    let data = {}
+    const labels = issue.labels.map(labelObject => labelObject.name);
 
-    data.text = text;
-    for(let i in labels) {
-      let key = `label${i}`
-      data[key] = labels[i]
+    // add label counts to labelCount object
+    for (let i in labels) {
+      const label = labels[i];
+
+      if (labelCount[label]) {
+        labelCount[label]++;
+      } else {
+        labelCount[label] = 1;
+      }
     }
-
-    return data
+    return {text, labels};
   } catch (error) {
     log.error(
       'ERROR EXTRACTING ISSUE REPOSITORY URL, NUMBER, TITLE, BODY, & LABELS FROM GITHUB ISSUE OBJECT.'
@@ -96,20 +142,11 @@ function getIssueInfo(issue) {
  */
 function makeCSV(issues, file) {
   try {
-    const json2csvParser = new Json2csvParser({header: false});
-    let csv = json2csvParser.parse(issues);
-    csv = csv.replace(/(,){2,}/g, ' ');
-    fs.appendFileSync(file, csv);
+    let stuff = Papa.unparse(issues, {header: false, quotes: true});
+    fs.appendFileSync(file, stuff);
   } catch (error) {
     log.error('ERROR WRITING ISSUES DATA TO CSV.');
   }
-}
-
-function fix(csv, saveAs) {
-  let data = fs.readFileSync(csv).toString();
-
-  data = data.replace(/(,){2,}/g, ' ');
-  fs.appendFileSync(saveAs, data);
 }
 
 /**
@@ -209,5 +246,4 @@ module.exports = {
   makeCSV: makeCSV,
   createDataset: createDataset,
   importData: importData,
-  fix: fix,
 };

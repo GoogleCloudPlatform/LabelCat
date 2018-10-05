@@ -48,14 +48,6 @@ require(`yargs`)
       util.importData(projectId, computeRegion, datasetId, path);
     }
   )
-  .command(
-    `fixCsv <issuesFile> <saveFile`,
-    `Import the GitHub issues data from Google Cloud Storage bucket into the Google AutoML NL dataset by specifying the file's path in the bucket and the dataset ID.`,
-    {},
-    opts => {
-      util.fix(opts.issuesFile, opts.saveFile);
-    }
-  )
   .example(
     `$0 retrieveIssues repoData.txt issuesData.csv`,
     `Retrieves issues from list of repos in repoData.txt and saves the resulting information to issuesData.csv.`
