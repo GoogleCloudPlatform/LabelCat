@@ -27,8 +27,8 @@
   },
   "scripts": {
     "cover": "nyc --reporter=lcov mocha test/*.js && nyc report",
-    "lint": "eslint src/ system-test/ test/",
-    "prettier": "prettier --write src/*.js test/*.js system-test/*.js",
+    "lint": "eslint src/ system-test/ test/ bin/",
+    "prettier": "prettier --write bin/*.js src/*.js test/*.js system-test/*.js",
     "system-test": "mocha system-test/*.js --timeout 600000",
     "test-no-cover": "mocha test/*.js",
     "test": "npm run cover"
@@ -36,7 +36,6 @@
   "dependencies": {
     "@google-cloud/automl": "^0.1.2",
     "@octokit/rest": "^15.12.1",
-    "axios": "^0.18.0",
     "csv-write-stream": "^2.0.0",
     "json2csv": "^4.2.1",
     "loglevel": "^1.6.1",

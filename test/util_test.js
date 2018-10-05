@@ -99,7 +99,6 @@ describe('retrieveIssues', () => {
     assert(result[0].text === 'issue details');
     assert(result[0].label0 === 'type: bug');
   });
-
   it('should throw an error', async () => {
     const path = __dirname + '/' + 'test.csv';
 
@@ -147,7 +146,6 @@ describe('getIssueInfo()', function() {
 
   it('should return issue object with text & labels keys', async function() {
     const result = await util.getIssueInfo(originalIssue, labelCount);
-
     assert.strictEqual(
       Object.keys(result).length,
       Object.keys(returnedIssue).length
