@@ -38,79 +38,124 @@ describe('makeCSV()', function() {
   });
 });
 
-describe('retrieveIssues', () => {
-  let util, axiosMock;
-
-  beforeEach(() => {
-    axiosMock = {get: sinon.stub()};
-    util = proxyquire('../src/util.js', {axios: axiosMock});
-  });
-
-  it('should pass new issue object to makeCSV', async () => {
-    let issues = [
+describe('cleanLabels()', function() {
+  it('should remove issues with labels that appear < 100 times in dataset', function() {
+    const issue = [
       {
-        title: 'issue',
-        body: 'details',
-        labels: [{name: 'type: bug'}],
+        text: 'title body',
+        labels: ['type: bug', 'testing'],
       },
     ];
 
+    const labelCount = {
+      'type: bug': 99,
+      testing: 99,
+    };
+
+    const result = util.cleanLabels(issue, labelCount);
+
+    assert(result.length === 0);
+  });
+});
+
+describe('retrieveIssues', () => {
+  let util, octoMock;
+
+  beforeEach(() => {
+    const issueData = {
+      data: [
+        {
+          title: 'issue',
+          body: 'details',
+          labels: [{name: 'type: bug'}],
+        },
+      ],
+    };
+
+    const getNext = sinon.stub().returns(issueData);
+    const hasNext = sinon.stub();
+    hasNext.returns(true);
+    hasNext.onCall(99).returns(false);
+
+    const mockGet = sinon.stub().returns(Promise.resolve(issueData));
+
+    octoMock = {
+      authenticate: sinon.stub(),
+      issues: {getForRepo: mockGet},
+      hasNextPage: hasNext,
+      getNextPage: getNext,
+    };
+    util = proxyquire('../src/util.js', {
+      '@octokit/rest': () => octoMock,
+    });
+  });
+
+  it('should pass new issue object to makeCSV', async () => {
     const path = __dirname + '/' + 'test.csv';
-    const expectedResponse = Promise.resolve({data: issues});
-    axiosMock.get.returns(expectedResponse);
 
     const result = await util.retrieveIssues('test/test_repos.txt', path);
 
-    // update issues to match updated labels value
-    issues[0].labels = ['type: bug'];
-
-    assert(result.length === 1);
+    assert(result.length === 100);
     assert(result[0].text === 'issue details');
+    assert(result[0].label0 === 'type: bug');
   });
+
   it('should throw an error', async () => {
     const path = __dirname + '/' + 'test.csv';
 
-    const expectedResponse = Promise.resolve({
+    const expectedResponse = Promise.reject({
       response: {
         status: 404,
         statusText: 'Not Found',
       },
     });
-    axiosMock.get.returns(expectedResponse);
 
-    await util.retrieveIssues('test/test_repos.txt', path);
+    octoMock.issues.getForRepo.returns(expectedResponse);
 
-    sinon.assert.calledOnce(axiosMock.get);
+    const result = await util.retrieveIssues('test/test_repos.txt', path);
+
+    assert(result === undefined);
+    sinon.assert.calledOnce(octoMock.issues.getForRepo);
+    sinon.assert.notCalled(octoMock.hasNextPage);
+    sinon.assert.notCalled(octoMock.getNextPage);
   });
 });
 
 describe('getIssueInfo()', function() {
-  it('should return issue object', async function() {
-    const originalIssue = {
+  let originalIssue, returnedIssue, labelCount;
+  beforeEach(() => {
+    originalIssue = {
       id: 1,
       node_id: 'MDU6SXNWUx',
       number: 1,
       repository_url: 'http://github.com/fakerepo',
       state: 'open',
-      title: 'issue title',
-      body: 'issue body',
+      title: 'title',
+      body: 'body',
       labels: [{name: 'type: bug'}],
     };
 
-    const returnedIssue = {
-      text: 'issue body',
+    returnedIssue = {
+      text: 'title body',
       labels: ['type: bug'],
     };
 
-    const result = await util.getIssueInfo(originalIssue);
+    labelCount = {
+      'type: bug': 100,
+    };
+  });
+
+  it('should return issue object with text & labels keys', async function() {
+    const result = await util.getIssueInfo(originalIssue, labelCount);
 
     assert.strictEqual(
       Object.keys(result).length,
       Object.keys(returnedIssue).length
     );
-
     assert.strictEqual(Object.keys(result)[0], Object.keys(returnedIssue)[0]);
+    assert(result.text === 'title body');
   });
+
   it('should throw an error', async () => {
     const badIssue = {
       repository_url: 'http://github.com/fakerepo',
@@ -118,7 +163,7 @@ describe('getIssueInfo()', function() {
       body: 'issue body',
     };
 
-    let result = await util.getIssueInfo(badIssue);
+    let result = await util.getIssueInfo(badIssue, labelCount);
     assert(result === undefined);
   });
 });

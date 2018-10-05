@@ -7,12 +7,6 @@ const log = require('loglevel');
 const Papa = require('papaparse');
 log.setLevel('info');
 
-octokit.authenticate({
-  type: 'oauth',
-  key: settings.githubClientID,
-  secret: settings.githubClientSecret,
-});
-
 /**
  * Take a filepath to a json object of issues
  * and a filename to save the resulting issue data,
@@ -21,8 +15,15 @@ octokit.authenticate({
  * @param {string} file
  */
 async function retrieveIssues(data) {
+  octokit.authenticate({
+    type: 'oauth',
+    key: settings.githubClientID,
+    secret: settings.githubClientSecret,
+  });
+
   log.info('RETRIEVING ISSUES...');
-  let repo;
+  let repo, owner;
+
   // read each line of a .txt file of repo names (:/owner/:repo)
   try {
     let issueResults = [];
@@ -37,14 +38,14 @@ async function retrieveIssues(data) {
 
     // make API call to retrieve issues for each repository in the array
     for (let i in reposArray) {
-      const owner = reposArray[i].match(/^[^/]+/);
+      owner = reposArray[i].match(/^[^/]+/);
       repo = reposArray[i].match(/[^/]*$/);
 
-      await paginate(octokit.issues.getForRepo, repo, owner).then(data => {
-        const results = data.map(issue => getIssueInfo(issue, labelCount));
-        results.forEach(function(issue) {
-          issueResults.push(issue);
-        });
+      const data = await paginate(octokit.issues.getForRepo, repo, owner);
+      const results = data.map(issue => getIssueInfo(issue, labelCount));
+
+      results.forEach(function(issue) {
+        issueResults.push(issue);
       });
     }
 
@@ -54,8 +55,9 @@ async function retrieveIssues(data) {
     return issueResults;
   } catch (error) {
     log.error(
-      `ERROR RETRIEVING ISSUES FROM GITHUB. REPOSITORY: ${repo}. PLEASE CHECK REPOSITORY LIST, GITHUB CLIENT ID, & GITHUB CLIENT SECRET. ERROR: ${error}`
+      `ERROR RETRIEVING ISSUES FROM GITHUB. REPOSITORY: ${owner}/${repo}. PLEASE CHECK REPOSITORY LIST, GITHUB CLIENT ID, & GITHUB CLIENT SECRET. ERROR:`
     );
+    log.error(error);
   }
 }
 
@@ -66,11 +68,13 @@ async function paginate(method, repo, owner) {
     per_page: 100,
     state: 'all',
   });
+
   let {data} = response;
   while (octokit.hasNextPage(response)) {
     response = await octokit.getNextPage(response);
     data = data.concat(response.data);
   }
+
   return data;
 }
 
@@ -94,7 +98,7 @@ function cleanLabels(issues, labelCount) {
     if (issue.labels.length === 0 || !issue.text.match(/[^\s]/)) {
       issues.splice(i, 1);
     } else {
-      // give each label a key to ease csv writing format
+      // give each label a key to ease writing csv
       for (let k in issue.labels) {
         let key = `label${k}`;
         issue[key] = issue.labels[k];
@@ -138,12 +142,13 @@ function getIssueInfo(issue, labelCount) {
 /**
  * Create a csv file of issue data
  *
- * @param {array} issues - The issues to group.
+ * @param {array} issues - The issues to group
+ * @param {string} file - Path for saving new csv
  */
 function makeCSV(issues, file) {
   try {
-    let stuff = Papa.unparse(issues, {header: false, quotes: true});
-    fs.appendFileSync(file, stuff);
+    const csv = Papa.unparse(issues, {header: false, quotes: true});
+    fs.appendFileSync(file, csv);
   } catch (error) {
     log.error('ERROR WRITING ISSUES DATA TO CSV.');
   }
@@ -241,9 +246,10 @@ async function importData(projectId, computeRegion, datasetId, path) {
 }
 
 module.exports = {
-  retrieveIssues: retrieveIssues,
-  getIssueInfo: getIssueInfo,
-  makeCSV: makeCSV,
-  createDataset: createDataset,
-  importData: importData,
+  retrieveIssues,
+  getIssueInfo,
+  makeCSV,
+  createDataset,
+  importData,
+  cleanLabels,
 };
