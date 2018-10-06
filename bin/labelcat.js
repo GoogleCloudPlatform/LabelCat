@@ -11,7 +11,7 @@ require(`yargs`)
     {},
     async opts => {
       util.makeCSV(
-        await util.retrieveIssues(opts.repoDataFilePath),
+        await util.retrieveIssues(opts.repoDataFilePath, 'type: bug'),
         opts.issuesDataFilePath
       );
     }
@@ -20,7 +20,7 @@ require(`yargs`)
     `createDataset <datasetName>`,
     `Create a new Google AutoML NL dataset with the specified name.`,
     function(command) {
-      command.options({multiclass: {alias: 'm'}});
+      command.options({multilabel: {alias: 'm'}});
     },
     opts => {
       const projectId = settings.projectId;
@@ -31,7 +31,7 @@ require(`yargs`)
         projectId,
         computeRegion,
         datasetName,
-        opts.multiclass
+        opts.multilabel
       );
     }
   )

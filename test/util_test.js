@@ -38,26 +38,6 @@ describe('makeCSV()', function() {
   });
 });
 
-describe('cleanLabels()', function() {
-  it('should remove issues with labels that appear < 100 times in dataset', function() {
-    const issue = [
-      {
-        text: 'title body',
-        labels: ['type: bug', 'testing'],
-      },
-    ];
-
-    const labelCount = {
-      'type: bug': 99,
-      testing: 99,
-    };
-
-    const result = util.cleanLabels(issue, labelCount);
-
-    assert(result.length === 0);
-  });
-});
-
 describe('retrieveIssues', () => {
   let util, octoMock;
 
@@ -69,13 +49,18 @@ describe('retrieveIssues', () => {
           body: 'details',
           labels: [{name: 'type: bug'}],
         },
+        {
+          title: 'issue',
+          body: 'details',
+          labels: [{name: 'other'}],
+        },
       ],
     };
 
     const getNext = sinon.stub().returns(issueData);
     const hasNext = sinon.stub();
     hasNext.returns(true);
-    hasNext.onCall(99).returns(false);
+    hasNext.onCall(1).returns(false);
 
     const mockGet = sinon.stub().returns(Promise.resolve(issueData));
 
@@ -95,9 +80,8 @@ describe('retrieveIssues', () => {
 
     const result = await util.retrieveIssues('test/test_repos.txt', path);
 
-    assert(result.length === 100);
     assert(result[0].text === 'issue details');
-    assert(result[0].label0 === 'type: bug');
+    assert(result[0].label === 1);
   });
   it('should throw an error', async () => {
     const path = __dirname + '/' + 'test.csv';
@@ -138,14 +122,10 @@ describe('getIssueInfo()', function() {
       text: 'title body',
       labels: ['type: bug'],
     };
-
-    labelCount = {
-      'type: bug': 100,
-    };
   });
 
   it('should return issue object with text & labels keys', async function() {
-    const result = await util.getIssueInfo(originalIssue, labelCount);
+    const result = await util.getIssueInfo(originalIssue);
     assert.strictEqual(
       Object.keys(result).length,
       Object.keys(returnedIssue).length

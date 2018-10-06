@@ -14,7 +14,7 @@ log.setLevel('info');
  * @param {string} data
  * @param {string} file
  */
-async function retrieveIssues(data) {
+async function retrieveIssues(data, label) {
   octokit.authenticate({
     type: 'oauth',
     key: settings.githubClientID,
@@ -49,7 +49,7 @@ async function retrieveIssues(data) {
       });
     }
 
-    issueResults = cleanLabels(issueResults, labelCount);
+    issueResults = issueResults.map(issue => cleanLabels(issue, label));
     log.info(`ISSUES RETRIEVED: ${issueResults.length}`);
 
     return issueResults;
@@ -84,31 +84,16 @@ async function paginate(method, repo, owner) {
  * @param {array} issues
  * @param {object} labelCount
  */
-function cleanLabels(issues, labelCount) {
-  let data = [];
-  for (let i = issues.length - 1; i >= 0; i--) {
-    let issue = issues[i];
+function cleanLabels(issue, label) {
+  let info;
 
-    issue.labels = issue.labels.filter(function(value) {
-      if (labelCount[value] > 99) {
-        return value;
-      }
-    });
-
-    if (issue.labels.length === 0 || !issue.text.match(/[^\s]/)) {
-      issues.splice(i, 1);
-    } else {
-      // give each label a key to ease writing csv
-      for (let k in issue.labels) {
-        let key = `label${k}`;
-        issue[key] = issue.labels[k];
-      }
-
-      delete issue.labels;
-      data.push(issue);
-    }
+  if (issue.labels.includes(label)) {
+    info = {text: issue.text, label: 1};
+  } else {
+    info = {text: issue.text, label: 0};
   }
-  return data;
+
+  return info;
 }
 
 /**
@@ -116,21 +101,11 @@ function cleanLabels(issues, labelCount) {
  *
  * @param {object} issue - GitHub repository issue
  */
-function getIssueInfo(issue, labelCount) {
+function getIssueInfo(issue) {
   try {
     const text = issue.title + ' ' + issue.body;
     const labels = issue.labels.map(labelObject => labelObject.name);
 
-    // add label counts to labelCount object
-    for (let i in labels) {
-      const label = labels[i];
-
-      if (labelCount[label]) {
-        labelCount[label]++;
-      } else {
-        labelCount[label] = 1;
-      }
-    }
     return {text, labels};
   } catch (error) {
     log.error(
@@ -165,16 +140,16 @@ async function createDataset(
   projectId,
   computeRegion,
   datasetName,
-  multiClass
+  multiLabel
 ) {
   const automl = require(`@google-cloud/automl`);
   const client = new automl.v1beta1.AutoMlClient();
   const projectLocation = client.locationPath(projectId, computeRegion);
 
   // Classification type is assigned based on multiClass value.
-  let classificationType = `MULTILABEL`;
-  if (multiClass) {
-    classificationType = `MULTICLASS`;
+  let classificationType = `MULTICLASS`;
+  if (multiLabel) {
+    classificationType = `MULTILABEL`;
   }
 
   // Set dataset name and metadata.
