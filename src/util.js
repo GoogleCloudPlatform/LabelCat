@@ -79,10 +79,10 @@ async function paginate(method, repo, owner) {
 }
 
 /**
- * remove labels that occur less than 100 times in dataset
+ * determines whether label is preset in text
  *
  * @param {array} issues
- * @param {object} labelCount
+ * @param {string} label
  */
 function cleanLabels(issue, label) {
   let info;

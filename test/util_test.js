@@ -76,15 +76,14 @@ describe('retrieveIssues', () => {
   });
 
   it('should pass new issue object to makeCSV', async () => {
-    const path = __dirname + '/' + 'test.csv';
+    let label = 'type: bug';
 
-    const result = await util.retrieveIssues('test/test_repos.txt', path);
-
+    const result = await util.retrieveIssues('test/test_repos.txt', label);
     assert(result[0].text === 'issue details');
     assert(result[0].label === 1);
   });
   it('should throw an error', async () => {
-    const path = __dirname + '/' + 'test.csv';
+    let label = 'type: bug';
 
     const expectedResponse = Promise.reject({
       response: {
@@ -95,7 +94,7 @@ describe('retrieveIssues', () => {
 
     octoMock.issues.getForRepo.returns(expectedResponse);
 
-    const result = await util.retrieveIssues('test/test_repos.txt', path);
+    const result = await util.retrieveIssues('test/test_repos.txt', label);
 
     assert(result === undefined);
     sinon.assert.calledOnce(octoMock.issues.getForRepo);
