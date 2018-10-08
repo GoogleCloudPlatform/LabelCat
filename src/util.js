@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const settings = require('../settings.json'); // eslint-disable-line node/no-missing-require
+const settings = require('../functions/settings.json'); // eslint-disable-line node/no-missing-require
 const octokit = require('@octokit/rest')();
 const log = require('loglevel');
 const Papa = require('papaparse');
@@ -18,8 +18,7 @@ const automl = require(`@google-cloud/automl`);
 async function retrieveIssues(data, label, alternatives) {
   octokit.authenticate({
     type: 'oauth',
-    key: settings.githubClientID,
-    secret: settings.githubClientSecret,
+    token: settings.secretToken,
   });
 
   log.info('RETRIEVING ISSUES...');
@@ -106,7 +105,8 @@ function cleanLabels(issue, opts) {
  */
 function getIssueInfo(issue) {
   try {
-    const text = issue.title + ' ' + issue.body;
+    const raw = issue.title + ' ' + issue.body;
+    const text = raw.replace(/[^\w\s]/gi, '');
     const labels = issue.labels.map(labelObject => labelObject.name);
 
     return {text, labels};

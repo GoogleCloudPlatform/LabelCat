@@ -169,6 +169,14 @@ Examples:
 
         labelcat createModel 123ABCD456789 firstModel
 
+## Deploy Cloud Functions
+1.  `cd Functions`
+1.  `npm install`
+1.  `cp defaultsettings.json settings.json`
+1.  Modify `settings.json` as necessary.
+1. `gcloud alpha functions deploy handleNewIssue --trigger-http --runtime nodejs8`
+1. `gcloud functions deploy triage --runtime nodejs8 --trigger-resource YOUR-PUB/SUB-TOPIC-NAME --trigger-event google.pubsub.topic.publish
+`
 ## Contributing
 
 See [CONTRIBUTING][3].
