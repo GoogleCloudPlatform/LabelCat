@@ -6,6 +6,7 @@ const settings = require('../settings.json'); // eslint-disable-line node/no-mis
 const Json2csvParser = require('json2csv').Parser;
 const log = require('loglevel');
 log.setLevel('info');
+const automl = require(`@google-cloud/automl`);
 /**
  * Take a filepath to a json object of issues
  * and a filename to save the resulting issue data,
@@ -151,7 +152,6 @@ async function createDataset(
  * @param {string} path
  */
 async function importData(projectId, computeRegion, datasetId, path) {
-  const automl = require(`@google-cloud/automl`);
   const client = new automl.v1beta1.AutoMlClient();
 
   // Get the full path of the dataset.
@@ -177,10 +177,90 @@ async function importData(projectId, computeRegion, datasetId, path) {
   }
 }
 
+async function listDatasets(projectId, computeRegion) {
+  const client = new automl.v1beta1.AutoMlClient();
+  const projectLocation = client.locationPath(projectId, computeRegion);
+
+  try {
+    const responses = await client.listDatasets({parent: projectLocation})
+    const dataset = responses[0];
+
+    // Display the dataset information.
+    log.info(`DATASETS:`);
+    for (let i of dataset) {
+      log.info(`Dataset name: ${i.name}`);
+      log.info(`Dataset id: ${i.name.split(`/`).pop(-1)}`);
+      log.info(`Dataset display name: ${i.displayName}`);
+      log.info(`Dataset example count: ${i.exampleCount}`);
+      log.info(`Text classification type:`);
+      log.info(`\t ${i.textClassificationDatasetMetadata.classificationType}`);
+    }
+  } catch (error) {
+    log.error(
+      'ERROR: DATASETS COULD NOT BE RETRIEVED. PLEASE CHECK PROJECT ID & COMPUTE REGION.'
+    );
+  }
+}
+
+//
+// function createModel(projectId, computeRegion, datasetId, modelName) {
+//   const client = new automl.v1beta1.AutoMlClient();
+//
+//   // A resource that represents Google Cloud Platform location.
+//   const projectLocation = client.locationPath(projectId, computeRegion);
+//
+//   // Set model name and model metadata for the dataset.
+//   const myModel = {
+//     displayName: modelName,
+//     datasetId: datasetId,
+//     textClassificationModelMetadata: {},
+//   };
+//
+//   // Create a model with the model metadata in the region.
+//   client
+//     .createModel({parent: projectLocation, model: myModel})
+//     .then(responses => {
+//       const operation = responses[0];
+//       const initialApiResponse = responses[1];
+//
+//       console.log(`Training operation name: ${initialApiResponse.name}`);
+//       console.log(`Training started...`);
+//       return operation.promise();
+//     })
+//     .then(responses => {
+//       // The final result of the operation.
+//       const model = responses[0];
+//
+//       // Retrieve deployment state.
+//       let deploymentState = ``;
+//       if (model.deploymentState === 1) {
+//         deploymentState = `deployed`;
+//       } else if (model.deploymentState === 2) {
+//         deploymentState = `undeployed`;
+//       }
+//
+//       // Display the model information.
+//       console.log(`Model name: ${model.name}`);
+//       console.log(`Model id: ${model.name.split(`/`).pop(-1)}`);
+//       console.log(`Model display name: ${model.displayName}`);
+//       console.log(`Model create time:`);
+//       console.log(`\tseconds: ${model.createTime.seconds}`);
+//       console.log(`\tnanos: ${model.createTime.nanos}`);
+//       console.log(`Model deployment state: ${deploymentState}`);
+//     })
+//     .catch(err => {
+//       console.error(err);
+//     });
+//   // [END automl_natural_language_createModel]
+// }
+
+
 module.exports = {
   retrieveIssues: retrieveIssues,
   getIssueInfo: getIssueInfo,
   makeCSV: makeCSV,
   createDataset: createDataset,
   importData: importData,
+  // createModel,
+  listDatasets
 };
