@@ -9,7 +9,14 @@ require(`yargs`)
     `retrieveIssues <repoDataFilePath> <issuesDataFilePath> <label>`,
     `Retrieves issues from a .txt file of gitHub repositories. Options: -a`,
     function(command) {
-      command.options({alternatives: {alias: 'a'}});
+      command.options({
+        alternatives: {
+          alias: 'a',
+          type: 'array',
+          requiresArg: true,
+          default: [],
+        },
+      });
     },
     async opts => {
       util.makeCSV(

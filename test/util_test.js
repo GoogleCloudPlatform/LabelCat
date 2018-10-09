@@ -50,6 +50,11 @@ describe('retrieveIssues', () => {
           labels: [{name: 'type: bug'}],
         },
         {
+          title: 'another issue',
+          body: 'more details',
+          labels: [{name: 'bug'}],
+        },
+        {
           title: 'issue',
           body: 'details',
           labels: [{name: 'other'}],
@@ -76,13 +81,14 @@ describe('retrieveIssues', () => {
   });
 
   it('should pass new issue object to makeCSV', async () => {
-    let label = 'type: bug';
+    const label = 'type: bug';
+    const alt = 'bug'
+    const result = await util.retrieveIssues('test/test_repos.txt', label, alt);
 
-    const result = await util.retrieveIssues('test/test_repos.txt', label, [
-      'type: test',
-    ]);
     assert(result[0].text === 'issue details');
     assert(result[0].label === 1);
+    assert(result[1].text === 'another issue more details');
+    assert(result[1].label === 1);
   });
   it('should throw an error', async () => {
     let label = 'type: bug';
