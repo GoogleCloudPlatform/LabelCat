@@ -14,7 +14,7 @@ log.setLevel('info');
  * @param {string} data
  * @param {string} file
  */
-async function retrieveIssues(data, label) {
+async function retrieveIssues(data, label, alternatives) {
   octokit.authenticate({
     type: 'oauth',
     key: settings.githubClientID,
@@ -27,7 +27,6 @@ async function retrieveIssues(data, label) {
   // read each line of a .txt file of repo names (:/owner/:repo)
   try {
     let issueResults = [];
-    let labelCount = {};
 
     const reposArray = fs
       .readFileSync(data)
@@ -42,16 +41,20 @@ async function retrieveIssues(data, label) {
       repo = reposArray[i].match(/[^/]*$/);
 
       const data = await paginate(octokit.issues.getForRepo, repo, owner);
-      const results = data.map(issue => getIssueInfo(issue, labelCount));
+      const results = data.map(issue => getIssueInfo(issue));
 
       results.forEach(function(issue) {
         issueResults.push(issue);
       });
     }
 
-    issueResults = issueResults.map(issue => cleanLabels(issue, label));
-    log.info(`ISSUES RETRIEVED: ${issueResults.length}`);
+    let opts = [label];
+    if (alternatives) {
+      opts = opts.concat(alternatives);
+    }
+    issueResults = issueResults.map(issue => cleanLabels(issue, opts));
 
+    log.info(`ISSUES RETRIEVED: ${issueResults.length}`);
     return issueResults;
   } catch (error) {
     log.error(
@@ -79,15 +82,14 @@ async function paginate(method, repo, owner) {
 }
 
 /**
- * determines whether label is preset in text
+ * determines whether label is present on issue
  *
  * @param {array} issues
  * @param {string} label
  */
-function cleanLabels(issue, label) {
+function cleanLabels(issue, opts) {
   let info;
-
-  if (issue.labels.includes(label)) {
+  if (issue.labels.some(r => opts.includes(r))) {
     info = {text: issue.text, label: 1};
   } else {
     info = {text: issue.text, label: 0};

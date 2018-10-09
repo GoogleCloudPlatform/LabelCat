@@ -6,19 +6,25 @@ const settings = require('../settings.json');
 require(`yargs`)
   .demand(1)
   .command(
-    `retrieveIssues <repoDataFilePath> <issuesDataFilePath>`,
-    `Retrieves issues from a .txt file of gitHub repositories.`,
-    {},
+    `retrieveIssues <repoDataFilePath> <issuesDataFilePath> <label>`,
+    `Retrieves issues from a .txt file of gitHub repositories. Options: -a`,
+    function(command) {
+      command.options({alternatives: {alias: 'a'}});
+    },
     async opts => {
       util.makeCSV(
-        await util.retrieveIssues(opts.repoDataFilePath, 'type: bug'),
+        await util.retrieveIssues(
+          opts.repoDataFilePath,
+          opts.label,
+          opts.alternatives
+        ),
         opts.issuesDataFilePath
       );
     }
   )
   .command(
     `createDataset <datasetName>`,
-    `Create a new Google AutoML NL dataset with the specified name.`,
+    `Create a new Google AutoML NL dataset with the specified name. Options: -m`,
     function(command) {
       command.options({multilabel: {alias: 'm'}});
     },
@@ -49,8 +55,8 @@ require(`yargs`)
     }
   )
   .example(
-    `$0 retrieveIssues repoData.txt issuesData.csv`,
-    `Retrieves issues from list of repos in repoData.txt and saves the resulting information to issuesData.csv.`
+    `$0 retrieveIssues repoData.txt issuesData.csv 'type: bug' -a 'bug' -a 'bugger'`,
+    `Retrieves issues with matching labels from list of repos in repoData.txt and saves the resulting information to issuesData.csv.`
   )
   .example(
     `$0 createDataset Data`,

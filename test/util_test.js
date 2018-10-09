@@ -78,7 +78,9 @@ describe('retrieveIssues', () => {
   it('should pass new issue object to makeCSV', async () => {
     let label = 'type: bug';
 
-    const result = await util.retrieveIssues('test/test_repos.txt', label);
+    const result = await util.retrieveIssues('test/test_repos.txt', label, [
+      'type: test',
+    ]);
     assert(result[0].text === 'issue details');
     assert(result[0].label === 1);
   });
