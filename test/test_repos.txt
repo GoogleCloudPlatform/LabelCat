@@ -1,1 +1,1 @@
-fake-repo
+fakeowner/fakerepo

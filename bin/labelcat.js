@@ -6,25 +6,34 @@ const settings = require('../settings.json'); // eslint-disable-line node/no-mis
 require(`yargs`)
   .demand(1)
   .command(
-    `retrieveIssues <repoDataFilePath> <issuesDataFilePath>`,
-    `Retrieves issues from a .txt file of gitHub repositories.`,
-    {},
+    `retrieveIssues <repoDataFilePath> <issuesDataFilePath> <label>`,
+    `Retrieves issues from a .txt file of gitHub repositories. Options: -a`,
+    function(command) {
+      command.options({
+        alternatives: {
+          alias: 'a',
+          type: 'array',
+          requiresArg: true,
+          default: [],
+        },
+      });
+    },
     async opts => {
       util.makeCSV(
-        await util.retrieveIssues(opts.repoDataFilePath),
+        await util.retrieveIssues(
+          opts.repoDataFilePath,
+          opts.label,
+          opts.alternatives
+        ),
         opts.issuesDataFilePath
       );
     }
   )
   .command(
     `createDataset <datasetName>`,
-    `Create a new Google AutoML NL dataset with the specified name.`,
-    {
-      multiclass: {
-        alias: 'm',
-        type: 'boolean',
-        description: 'Enables multi-class support.',
-      },
+    `Create a new Google AutoML NL dataset with the specified name. Options: -m`,
+    function(command) {
+      command.options({multilabel: {alias: 'm'}});
     },
     opts => {
       const projectId = settings.projectId;
@@ -35,7 +44,7 @@ require(`yargs`)
         projectId,
         computeRegion,
         datasetName,
-        opts.multiclass
+        opts.multilabel
       );
     }
   )
@@ -53,8 +62,8 @@ require(`yargs`)
     }
   )
   .example(
-    `$0 retrieveIssues repoData.txt issuesData.csv`,
-    `Retrieves issues from list of repos in repoData.txt and saves the resulting information to issuesData.csv.`
+    `$0 retrieveIssues repoData.txt issuesData.csv 'type: bug' -a 'bug' -a 'bugger'`,
+    `Retrieves issues with matching labels from list of repos in repoData.txt and saves the resulting information to issuesData.csv.`
   )
   .example(
     `$0 createDataset Data`,
