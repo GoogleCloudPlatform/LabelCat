@@ -142,6 +142,14 @@ Examples:
 
         labelcat createDataset TestData
 
+### List Datasets
+
+1.  Run listDataset to return a list of all AutoML NL datasets for the Google Cloud Platform project.
+
+    Example:
+
+        labelcat listDatasets
+
 ### Import Data
 
 1.  Run importData using the Dataset ID returned by the createDataset command
@@ -152,6 +160,14 @@ Examples:
         labelcat importData gs://YOUR_PROJECT_ID-lcm/issues.csv 123ABCD456789
 
     replacing `YOUR_PROJECT_ID` with your GCP project ID.
+
+### Create Model
+
+1.  Run createModel using the Dataset ID and the name of the model to be created.
+
+    Example:
+
+        labelcat createModel 123ABCD456789 firstModel
 
 ## Contributing
 

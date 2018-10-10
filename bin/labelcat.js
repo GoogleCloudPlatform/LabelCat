@@ -61,6 +61,30 @@ require(`yargs`)
       util.importData(projectId, computeRegion, datasetId, path);
     }
   )
+  .command(
+    `createModel <datasetId> <modelName>`,
+    `Train an AutoML NL model using existing dataset.`,
+    {},
+    opts => {
+      const projectId = settings.projectId;
+      const computeRegion = settings.computeRegion;
+      const datasetId = opts.datasetId;
+      const modelName = opts.modelName;
+
+      util.createModel(projectId, computeRegion, datasetId, modelName);
+    }
+  )
+  .command(
+    `listDatasets`,
+    `Train an AutoML NL model using existing dataset.`,
+    {},
+    () => {
+      const projectId = settings.projectId;
+      const computeRegion = settings.computeRegion;
+
+      util.listDatasets(projectId, computeRegion);
+    }
+  )
   .example(
     `$0 retrieveIssues repoData.txt issuesData.csv 'type: bug' -a 'bug' -a 'bugger'`,
     `Retrieves issues with matching labels from list of repos in repoData.txt and saves the resulting information to issuesData.csv.`
@@ -72,6 +96,14 @@ require(`yargs`)
   .example(
     `$0 importData gs://myproject/mytraindata.csv 1248102981`,
     `Imports the GitHub issues data into the dataset by specifying the file of issues data and the dataset ID.`
+  )
+  .example(
+    `$0 createModel 1234543ABC234 firstModel`,
+    `Trains an AutoML NL model using an existing dataset.`
+  )
+  .example(
+    `$0 listDatasets`,
+    `Lists all AutoML NL datasets for current Google Cloud Platform project.`
   )
   .wrap(120)
   .recommendCommands()

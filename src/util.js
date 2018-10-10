@@ -6,6 +6,7 @@ const octokit = require('@octokit/rest')();
 const log = require('loglevel');
 const Papa = require('papaparse');
 log.setLevel('info');
+const automl = require(`@google-cloud/automl`);
 
 /**
  * Take a filepath to a json object of issues
@@ -196,7 +197,6 @@ async function createDataset(
  * @param {string} path
  */
 async function importData(projectId, computeRegion, datasetId, path) {
-  const automl = require(`@google-cloud/automl`);
   const client = new automl.v1beta1.AutoMlClient();
 
   // Get the full path of the dataset.
@@ -222,6 +222,61 @@ async function importData(projectId, computeRegion, datasetId, path) {
   }
 }
 
+async function listDatasets(projectId, computeRegion) {
+  const client = new automl.v1beta1.AutoMlClient();
+  const projectLocation = client.locationPath(projectId, computeRegion);
+
+  try {
+    const responses = await client.listDatasets({parent: projectLocation});
+    const dataset = responses[0];
+
+    // Display the dataset information.
+    log.info(`DATASETS:`);
+    for (let i of dataset) {
+      log.info(`Dataset name: ${i.name}`);
+      log.info(`Dataset id: ${i.name.split(`/`).pop(-1)}`);
+      log.info(`Dataset display name: ${i.displayName}`);
+      log.info(`Dataset example count: ${i.exampleCount}`);
+      log.info(`Text classification type:`);
+      log.info(`\t ${i.textClassificationDatasetMetadata.classificationType}`);
+    }
+  } catch (error) {
+    log.error(
+      'ERROR: DATASETS COULD NOT BE RETRIEVED. PLEASE CHECK PROJECT ID & COMPUTE REGION.'
+    );
+  }
+}
+
+async function createModel(projectId, computeRegion, datasetId, modelName) {
+  const client = new automl.v1beta1.AutoMlClient();
+
+  // A resource that represents Google Cloud Platform location.
+  const projectLocation = client.locationPath(projectId, computeRegion);
+
+  // Set model name and model metadata for the dataset.
+  const myModel = {
+    displayName: modelName,
+    datasetId: datasetId,
+    textClassificationModelMetadata: {},
+  };
+  try {
+    // Create a model with the model metadata in the region.
+    const responses = await client.createModel({
+      parent: projectLocation,
+      model: myModel,
+    });
+    const initialApiResponse = responses[1];
+    log.info(`Training operation name: ${initialApiResponse.name}`);
+    log.info(
+      `Training started... \n Refer to AutoML dashboard for model status.`
+    );
+  } catch (error) {
+    log.error(
+      'ERROR: COULD NOT CREATE MODEL. PLEASE CHECK DATASET ID, PROJECT ID, & COMPUTE REGION.'
+    );
+  }
+}
+
 module.exports = {
   retrieveIssues,
   getIssueInfo,
@@ -229,4 +284,6 @@ module.exports = {
   createDataset,
   importData,
   cleanLabels,
+  createModel,
+  listDatasets,
 };

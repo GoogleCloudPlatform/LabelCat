@@ -255,3 +255,117 @@ describe('importData()', function() {
     util.importData(projectId, computeRegion, datasetId, file);
   });
 });
+
+describe('listDatasets()', function() {
+  const projectId = 'test-project';
+  const computeRegion = 'us-central1';
+
+  it('should return a list of datasets', async function() {
+    const location = sinon.spy();
+    const list = sinon.stub().returns([
+      [
+        {
+          name: 'projects/12345/locations/us-central1/datasets/12345',
+          displayName: 'testSet',
+          createTime: {seconds: '1538180498', nanos: 938685000},
+          exampleCount: 100,
+          textClassificationDatasetMetadata: {classificationType: 'MULTICLASS'},
+          datasetMetadata: 'textClassificationDatasetMetadata',
+        },
+      ],
+    ]);
+
+    const mockClient = sinon.stub().returns({
+      locationPath: location,
+      listDatasets: list,
+    });
+
+    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const util = proxyquire('../src/util.js', {
+      '@google-cloud/automl': autoMlMock,
+    });
+
+    await util.listDatasets(projectId, computeRegion);
+
+    sinon.assert.calledOnce(list);
+    sinon.assert.calledOnce(location);
+    assert(location.calledWith(projectId, computeRegion));
+  });
+  it('should throw an error', function() {
+    const location = sinon.spy();
+    const list = sinon.stub().returns([
+      [
+        {
+          name: 'projects/12345/locations/us-central1/datasets/12345',
+          displayName: 'TestSet',
+        },
+      ],
+    ]);
+
+    const mockClient = sinon.stub().returns({
+      locationPath: location,
+      listDatasets: list,
+    });
+
+    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const util = proxyquire('../src/util.js', {
+      '@google-cloud/automl': autoMlMock,
+    });
+
+    util.listDatasets(projectId, computeRegion);
+  });
+});
+// createModel(projectId, computeRegion, datasetId, modelName);
+describe('createModel()', function() {
+  const projectId = 'test-project';
+  const computeRegion = 'us-central1';
+
+  it('should call AutoML NL API to train model', async function() {
+    const location = sinon.spy();
+    const create = sinon.stub().returns([
+      {Operation: 'data'},
+      {
+        name:
+          'projects/203278707824/locations/us-central1/operations/TCN919683525469915167',
+        metadata: {
+          type_url:
+            'type.googleapis.com/google.cloud.automl.v1alpha1.OperationMetadata',
+          value: 'Test',
+        },
+        done: false,
+      },
+    ]);
+
+    const mockClient = sinon.stub().returns({
+      locationPath: location,
+      createModel: create,
+    });
+
+    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const util = proxyquire('../src/util.js', {
+      '@google-cloud/automl': autoMlMock,
+    });
+
+    await util.createModel(projectId, computeRegion, '123456ABC', 'testModel');
+
+    sinon.assert.calledOnce(create);
+    sinon.assert.calledOnce(location);
+    assert(location.calledWith(projectId, computeRegion));
+  });
+  it('should throw an error', async function() {
+    const location = sinon.spy();
+    const create = sinon.stub().returns([]);
+
+    const mockClient = sinon.stub().returns({
+      locationPath: location,
+      createModel: create,
+    });
+
+    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const util = proxyquire('../src/util.js', {
+      '@google-cloud/automl': autoMlMock,
+    });
+
+    await util.createModel(projectId, computeRegion, '123456ABC', 'testModel');
+  });
+});
