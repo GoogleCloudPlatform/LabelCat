@@ -82,30 +82,31 @@ animal, that's why you need LabelCat.
 ## Usage
 
 Run `labelcat --help` for usage information.
-
+```
     labelcat <command>
 
-    Commands:
-      labelcat retrieveIssues <repoDataFilePath>                    Retrieves issues from a .txt file of gitHub
-      <issuesDataFilePath>                                          repositories.
-      labelcat createDataset <datasetName>                          Create a new Google AutoML NL dataset with the specified
-                                                                    name.
-      labelcat importData <issuesDataPath> <datasetId>              Import the GitHub issues data from Google Cloud Storage
-                                                                    bucket into the Google AutoML NL dataset by specifying
-                                                                    the file's path in the bucket and the dataset ID.
+Commands:
+  labelcat retrieveIssues <repoDataFilePath>                    Retrieves issues from a .txt file of gitHub
+  <issuesDataFilePath> <label>                                  repositories. Options: -a
+  labelcat createDataset <datasetName>                          Create a new Google AutoML NL dataset with the specified
+                                                                name. Options: -m
+  labelcat importData <issuesDataPath> <datasetId>              Import the GitHub issues data from Google Cloud Storage
+                                                                bucket into the Google AutoML NL dataset by specifying
+                                                                the file's path in the bucket and the dataset ID.
 
-    Options:
-      --version  Show version number                                                                               [boolean]
-      --help     Show help                                                                                         [boolean]
+Options:
+  --version  Show version number                                                                               [boolean]
+  --help     Show help                                                                                         [boolean]
 
-    Examples:
-      labelcat retrieveIssues repoData.txt issuesData.csv           Retrieves issues from list of repos in repoData.txt and
-                                                                    saves the resulting information to issuesData.csv.
-      labelcat createDataset Data                                   Creates a new multilabel dataset with the specified
-                                                                    name.
-      labelcat importData gs://myproject/mytraindata.csv            Imports the GitHub issues data into the dataset by
-      1248102981
-
+Examples:
+  labelcat retrieveIssues repoData.txt issuesData.csv 'type:    Retrieves issues with matching labels from list of repos
+  bug' -a 'bug' -a 'bugger'                                     in repoData.txt and saves the resulting information to
+                                                                issuesData.csv.
+  labelcat createDataset Data                                   Creates a new multilabel dataset with the specified
+                                                                name.
+  labelcat importData gs://myproject/mytraindata.csv            Imports the GitHub issues data into the dataset by
+  1248102981                                                    specifying the file of issues data and the dataset ID.
+```
 ### Retrieve Issues
 
 1.  Create a `repos.txt` file with a single column list of GitHub repositories from
@@ -118,12 +119,11 @@ Run `labelcat --help` for usage information.
         GoogleCloudPlatform/google-cloud-python
 
 1.  From the project folder, run the retrieveIssues command with the path of the
-    repository list file and path to a location to save the resulting `.csv`
-    file:
+    repository list file, path to a location to save the resulting `.csv` file, desired issue label, and optional alternative issue labels:
 
     Example:
 
-        labelcat retrieveIssues repos.txt issues.csv
+        labelcat retrieveIssues repos.txt issues.csv "type: bug" -a "bug"
 
 1.  Upload the resulting .csv file to your Google Cloud Storage Bucket:
 
@@ -142,6 +142,14 @@ Run `labelcat --help` for usage information.
 
         labelcat createDataset TestData
 
+### List Datasets
+
+1.  Run listDataset to return a list of all AutoML NL datasets for the Google Cloud Platform project.
+
+    Example:
+
+        labelcat listDatasets
+
 ### Import Data
 
 1.  Run importData using the Dataset ID returned by the createDataset command
@@ -152,6 +160,14 @@ Run `labelcat --help` for usage information.
         labelcat importData gs://YOUR_PROJECT_ID-lcm/issues.csv 123ABCD456789
 
     replacing `YOUR_PROJECT_ID` with your GCP project ID.
+
+### Create Model
+
+1.  Run createModel using the Dataset ID and the name of the model to be created.
+
+    Example:
+
+        labelcat createModel 123ABCD456789 firstModel
 
 ## Contributing
 

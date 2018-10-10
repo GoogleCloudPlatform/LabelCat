@@ -1,12 +1,13 @@
 'use strict';
 
-const axios = require('axios');
 const fs = require('fs');
 const settings = require('../settings.json'); // eslint-disable-line node/no-missing-require
-const Json2csvParser = require('json2csv').Parser;
+const octokit = require('@octokit/rest')();
 const log = require('loglevel');
+const Papa = require('papaparse');
 log.setLevel('info');
 const automl = require(`@google-cloud/automl`);
+
 /**
  * Take a filepath to a json object of issues
  * and a filename to save the resulting issue data,
@@ -14,9 +15,20 @@ const automl = require(`@google-cloud/automl`);
  * @param {string} data
  * @param {string} file
  */
-async function retrieveIssues(data) {
+async function retrieveIssues(data, label, alternatives) {
+  octokit.authenticate({
+    type: 'oauth',
+    key: settings.githubClientID,
+    secret: settings.githubClientSecret,
+  });
+
+  log.info('RETRIEVING ISSUES...');
+  let repo, owner;
+
   // read each line of a .txt file of repo names (:/owner/:repo)
   try {
+    let issueResults = [];
+
     const reposArray = fs
       .readFileSync(data)
       .toString()
@@ -24,31 +36,67 @@ async function retrieveIssues(data) {
       .map(repo => repo.trim())
       .filter(Boolean);
 
-    let issueResults = [];
-
     // make API call to retrieve issues for each repository in the array
     for (let i in reposArray) {
-      const repo = reposArray[i];
-      const githubClientID = settings.githubClientID;
-      const githubClientSecret = settings.githubClientSecret;
+      owner = reposArray[i].match(/^[^/]+/);
+      repo = reposArray[i].match(/[^/]*$/);
 
-      const url = `https://api.github.com/repos/${repo}/issues?state=all&per_page=100&client_id=${githubClientID}&client_secret=${githubClientSecret}`;
-
-      const response = await axios.get(url);
-
-      const issuesArray = response.data;
-      const results = issuesArray.map(issue => getIssueInfo(issue));
+      const data = await paginate(octokit.issues.getForRepo, repo, owner);
+      const results = data.map(issue => getIssueInfo(issue));
 
       results.forEach(function(issue) {
         issueResults.push(issue);
       });
     }
+
+    let opts = [label];
+    if (alternatives) {
+      opts = opts.concat(alternatives);
+    }
+    issueResults = issueResults.map(issue => cleanLabels(issue, opts));
+
+    log.info(`ISSUES RETRIEVED: ${issueResults.length}`);
     return issueResults;
   } catch (error) {
     log.error(
-      'ERROR RETRIEVING ISSUES FROM GITHUB. PLEASE CHECK REPOSITORY LIST, GITHUB CLIENT ID, & GITHUB CLIENT SECRET.'
+      `ERROR RETRIEVING ISSUES FROM GITHUB. REPOSITORY: ${owner}/${repo}. PLEASE CHECK REPOSITORY LIST, GITHUB CLIENT ID, & GITHUB CLIENT SECRET. ERROR:`
     );
+    log.error(error);
   }
+}
+
+async function paginate(method, repo, owner) {
+  let response = await method({
+    owner: owner,
+    repo: repo,
+    per_page: 100,
+    state: 'all',
+  });
+
+  let {data} = response;
+  while (octokit.hasNextPage(response)) {
+    response = await octokit.getNextPage(response);
+    data = data.concat(response.data);
+  }
+
+  return data;
+}
+
+/**
+ * determines whether label is present on issue
+ *
+ * @param {array} issues
+ * @param {string} label
+ */
+function cleanLabels(issue, opts) {
+  let info;
+  if (issue.labels.some(r => opts.includes(r))) {
+    info = {text: issue.text, label: 1};
+  } else {
+    info = {text: issue.text, label: 0};
+  }
+
+  return info;
 }
 
 /**
@@ -59,11 +107,9 @@ async function retrieveIssues(data) {
 function getIssueInfo(issue) {
   try {
     const text = issue.title + ' ' + issue.body;
+    const labels = issue.labels.map(labelObject => labelObject.name);
 
-    return {
-      text: text,
-      labels: issue.labels.map(labelObject => labelObject.name),
-    };
+    return {text, labels};
   } catch (error) {
     log.error(
       'ERROR EXTRACTING ISSUE REPOSITORY URL, NUMBER, TITLE, BODY, & LABELS FROM GITHUB ISSUE OBJECT.'
@@ -74,13 +120,12 @@ function getIssueInfo(issue) {
 /**
  * Create a csv file of issue data
  *
- * @param {array} issues - The issues to group.
+ * @param {array} issues - The issues to group
+ * @param {string} file - Path for saving new csv
  */
 function makeCSV(issues, file) {
   try {
-    const fields = ['text', 'labels'];
-    const json2csvParser = new Json2csvParser({fields, unwind: 'labels'});
-    const csv = json2csvParser.parse(issues);
+    const csv = Papa.unparse(issues, {header: false, quotes: true});
     fs.appendFileSync(file, csv);
   } catch (error) {
     log.error('ERROR WRITING ISSUES DATA TO CSV.');
@@ -98,16 +143,16 @@ async function createDataset(
   projectId,
   computeRegion,
   datasetName,
-  multiClass
+  multiLabel
 ) {
   const automl = require(`@google-cloud/automl`);
   const client = new automl.v1beta1.AutoMlClient();
   const projectLocation = client.locationPath(projectId, computeRegion);
 
   // Classification type is assigned based on multiClass value.
-  let classificationType = `MULTILABEL`;
-  if (multiClass) {
-    classificationType = `MULTICLASS`;
+  let classificationType = `MULTICLASS`;
+  if (multiLabel) {
+    classificationType = `MULTILABEL`;
   }
 
   // Set dataset name and metadata.
@@ -226,7 +271,6 @@ async function createModel(projectId, computeRegion, datasetId, modelName) {
       `Training started... \n Refer to AutoML dashboard for model status.`
     );
   } catch (error) {
-    // TODO: ADD VERBOSE OPTION TO DISPLAY ERROR.DETAILS
     log.error(
       'ERROR: COULD NOT CREATE MODEL. PLEASE CHECK DATASET ID, PROJECT ID, & COMPUTE REGION.'
     );
@@ -234,11 +278,12 @@ async function createModel(projectId, computeRegion, datasetId, modelName) {
 }
 
 module.exports = {
-  retrieveIssues: retrieveIssues,
-  getIssueInfo: getIssueInfo,
-  makeCSV: makeCSV,
-  createDataset: createDataset,
-  importData: importData,
+  retrieveIssues,
+  getIssueInfo,
+  makeCSV,
+  createDataset,
+  importData,
+  cleanLabels,
   createModel,
   listDatasets,
 };

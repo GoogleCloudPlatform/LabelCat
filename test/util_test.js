@@ -39,78 +39,109 @@ describe('makeCSV()', function() {
 });
 
 describe('retrieveIssues', () => {
-  let util, axiosMock;
+  let util, octoMock;
 
   beforeEach(() => {
-    axiosMock = {get: sinon.stub()};
-    util = proxyquire('../src/util.js', {axios: axiosMock});
+    const issueData = {
+      data: [
+        {
+          title: 'issue',
+          body: 'details',
+          labels: [{name: 'type: bug'}],
+        },
+        {
+          title: 'another issue',
+          body: 'more details',
+          labels: [{name: 'bug'}],
+        },
+        {
+          title: 'issue',
+          body: 'details',
+          labels: [{name: 'other'}],
+        },
+      ],
+    };
+
+    const getNext = sinon.stub().returns(issueData);
+    const hasNext = sinon.stub();
+    hasNext.returns(true);
+    hasNext.onCall(1).returns(false);
+
+    const mockGet = sinon.stub().returns(Promise.resolve(issueData));
+
+    octoMock = {
+      authenticate: sinon.stub(),
+      issues: {getForRepo: mockGet},
+      hasNextPage: hasNext,
+      getNextPage: getNext,
+    };
+    util = proxyquire('../src/util.js', {
+      '@octokit/rest': () => octoMock,
+    });
   });
 
   it('should pass new issue object to makeCSV', async () => {
-    let issues = [
-      {
-        title: 'issue',
-        body: 'details',
-        labels: [{name: 'type: bug'}],
-      },
-    ];
+    const label = 'type: bug';
+    const alt = ['bug'];
+    const result = await util.retrieveIssues('test/test_repos.txt', label, alt);
 
-    const path = __dirname + '/' + 'test.csv';
-    const expectedResponse = Promise.resolve({data: issues});
-    axiosMock.get.returns(expectedResponse);
-
-    const result = await util.retrieveIssues('test/test_repos.txt', path);
-
-    // update issues to match updated labels value
-    issues[0].labels = ['type: bug'];
-
-    assert(result.length === 1);
+    assert(result.length === 6);
     assert(result[0].text === 'issue details');
+    assert(result[0].label === 1);
+    assert(result[1].text === 'another issue more details');
+    assert(result[1].label === 1);
   });
   it('should throw an error', async () => {
-    const path = __dirname + '/' + 'test.csv';
+    let label = 'type: bug';
 
-    const expectedResponse = Promise.resolve({
+    const expectedResponse = Promise.reject({
       response: {
         status: 404,
         statusText: 'Not Found',
       },
     });
-    axiosMock.get.returns(expectedResponse);
 
-    await util.retrieveIssues('test/test_repos.txt', path);
+    octoMock.issues.getForRepo.returns(expectedResponse);
 
-    sinon.assert.calledOnce(axiosMock.get);
+    const result = await util.retrieveIssues('test/test_repos.txt', label);
+
+    assert(result === undefined);
+    sinon.assert.calledOnce(octoMock.issues.getForRepo);
+    sinon.assert.notCalled(octoMock.hasNextPage);
+    sinon.assert.notCalled(octoMock.getNextPage);
   });
 });
 
 describe('getIssueInfo()', function() {
-  it('should return issue object', async function() {
-    const originalIssue = {
+  let originalIssue, returnedIssue, labelCount;
+  beforeEach(() => {
+    originalIssue = {
       id: 1,
       node_id: 'MDU6SXNWUx',
       number: 1,
       repository_url: 'http://github.com/fakerepo',
       state: 'open',
-      title: 'issue title',
-      body: 'issue body',
+      title: 'title',
+      body: 'body',
       labels: [{name: 'type: bug'}],
     };
 
-    const returnedIssue = {
-      text: 'issue body',
+    returnedIssue = {
+      text: 'title body',
       labels: ['type: bug'],
     };
+  });
 
+  it('should return issue object with text & labels keys', async function() {
     const result = await util.getIssueInfo(originalIssue);
-
     assert.strictEqual(
       Object.keys(result).length,
       Object.keys(returnedIssue).length
     );
-
     assert.strictEqual(Object.keys(result)[0], Object.keys(returnedIssue)[0]);
+    assert(result.text === 'title body');
   });
+
   it('should throw an error', async () => {
     const badIssue = {
       repository_url: 'http://github.com/fakerepo',
@@ -118,7 +149,7 @@ describe('getIssueInfo()', function() {
       body: 'issue body',
     };
 
-    let result = await util.getIssueInfo(badIssue);
+    let result = await util.getIssueInfo(badIssue, labelCount);
     assert(result === undefined);
   });
 });
