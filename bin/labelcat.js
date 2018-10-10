@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const util = require('../src/util.js');
-const settings = require('../settings.json');
+const settings = require('../settings.json'); // eslint-disable-line node/no-missing-require
 
 require(`yargs`)
   .demand(1)
