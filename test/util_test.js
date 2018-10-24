@@ -9,6 +9,8 @@ const sinon = require('sinon');
 const assert = require('assert');
 
 describe('makeCSV()', function() {
+  const util = require('../src/util.js');
+
   it('should create a csv of issues', function() {
     const issues = [
       {
@@ -119,8 +121,10 @@ describe('retrieveIssues', () => {
 });
 
 describe('getIssueInfo()', function() {
-  let originalIssue, returnedIssue, labelCount;
+  let originalIssue, returnedIssue, labelCount, util;
   beforeEach(() => {
+    util = require('../src/util.js');
+
     originalIssue = {
       id: 1,
       node_id: 'MDU6SXNWUx',
