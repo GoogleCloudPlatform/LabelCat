@@ -183,9 +183,14 @@ describe('createDataset()', function() {
       createDataset: create,
     });
 
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
     const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
+      '../functions/settings.json': mockSettings,
     });
 
     util.createDataset(projectId, computeRegion, datasetName, multiLabel);
@@ -210,9 +215,14 @@ describe('createDataset()', function() {
       createDataset: create,
     });
 
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
     const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
+      '../functions/settings.json': mockSettings,
     });
 
     util.createDataset(projectId, computeRegion, datasetName, multiLabel);
@@ -235,8 +245,14 @@ describe('importData()', function() {
     });
 
     const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
+      '../functions/settings.json': mockSettings,
     });
 
     util.importData(projectId, computeRegion, datasetId, file);
@@ -254,8 +270,14 @@ describe('importData()', function() {
     });
 
     const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
+      '../functions/settings.json': mockSettings,
     });
 
     util.importData(projectId, computeRegion, datasetId, file);
@@ -287,8 +309,14 @@ describe('listDatasets()', function() {
     });
 
     const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
+      '../functions/settings.json': mockSettings,
     });
 
     await util.listDatasets(projectId, computeRegion);
@@ -314,8 +342,14 @@ describe('listDatasets()', function() {
     });
 
     const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
+      '../functions/settings.json': mockSettings,
     });
 
     util.listDatasets(projectId, computeRegion);
@@ -347,9 +381,14 @@ describe('createModel()', function() {
       createModel: create,
     });
 
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
     const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
+      '../functions/settings.json': mockSettings,
     });
 
     await util.createModel(projectId, computeRegion, '123456ABC', 'testModel');
@@ -368,8 +407,14 @@ describe('createModel()', function() {
     });
 
     const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
+      '../functions/settings.json': mockSettings,
     });
 
     await util.createModel(projectId, computeRegion, '123456ABC', 'testModel');
