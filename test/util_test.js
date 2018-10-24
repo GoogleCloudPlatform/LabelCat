@@ -1,4 +1,3 @@
-const util = require('../src/util.js');
 const fs = require('fs');
 const mocha = require('mocha');
 const describe = mocha.describe;
@@ -9,7 +8,7 @@ const sinon = require('sinon');
 const assert = require('assert');
 
 describe('makeCSV()', function() {
-  const util = require('../src/util.js');
+  const util = proxyquire('../src/util.js', {});
 
   it('should create a csv of issues', function() {
     const issues = [
@@ -123,7 +122,7 @@ describe('retrieveIssues', () => {
 describe('getIssueInfo()', function() {
   let originalIssue, returnedIssue, labelCount, util;
   beforeEach(() => {
-    util = require('../src/util.js');
+    util = proxyquire('../src/util.js', {});
 
     originalIssue = {
       id: 1,
