@@ -8,7 +8,13 @@ const sinon = require('sinon');
 const assert = require('assert');
 
 describe('makeCSV()', function() {
-  const util = proxyquire('../src/util.js', {});
+  const mockSettings = {
+    secretToken: 'foo',
+  };
+
+  const util = proxyquire('../src/util.js', {
+    '../functions/settings.json': mockSettings,
+  });
 
   it('should create a csv of issues', function() {
     const issues = [
@@ -122,7 +128,13 @@ describe('retrieveIssues', () => {
 describe('getIssueInfo()', function() {
   let originalIssue, returnedIssue, labelCount, util;
   beforeEach(() => {
-    util = proxyquire('../src/util.js', {});
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
+    util = proxyquire('../src/util.js', {
+      '../functions/settings.json': mockSettings,
+    });
 
     originalIssue = {
       id: 1,
