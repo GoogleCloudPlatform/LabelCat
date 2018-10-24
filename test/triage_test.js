@@ -104,6 +104,7 @@ describe('triage()', function() {
     functions = proxyquire('../functions/index.js', {
       '@octokit/rest': () => octoMock,
       '@google-cloud/automl': autoMlMock,
+      '@google-cloud/pubsub': sinon.stub(),
       './settings.json': mockSettings,
     });
 
@@ -119,6 +120,7 @@ describe('triage()', function() {
   it('should throw error if unauthorized gitHub user', async () => {
     functions = proxyquire('../functions/index.js', {
       './settings.json': mockSettings,
+      '@google-cloud/pubsub': sinon.stub(),
     });
 
     let result = await functions.triage({data: {data: dataBuffer}});
