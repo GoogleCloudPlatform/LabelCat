@@ -3,7 +3,7 @@ const mocha = require('mocha');
 const describe = mocha.describe;
 const it = mocha.it;
 const beforeEach = mocha.beforeEach;
-const proxyquire = require('proxyquire');
+const proxyquire = require('proxyquire').noCallThru();
 const sinon = require('sinon');
 const assert = require('assert');
 
