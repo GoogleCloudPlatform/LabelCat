@@ -75,8 +75,14 @@ describe('retrieveIssues', () => {
       hasNextPage: hasNext,
       getNextPage: getNext,
     };
+
+    const mockSettings = {
+      secretToken: 'foo',
+    };
+
     util = proxyquire('../src/util.js', {
       '@octokit/rest': () => octoMock,
+      '../functions/settings.json': mockSettings,
     });
   });
 
