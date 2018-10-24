@@ -78,7 +78,6 @@ describe('handleNewIssue()', function() {
     });
 
     app.post(`/handleNewIssue`, functs.handleNewIssue);
-    // });
   });
 
   it('should validate request', function(done) {
