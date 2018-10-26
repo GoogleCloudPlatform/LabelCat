@@ -16,7 +16,9 @@ animal, that's why you need LabelCat.
 1.  `cd LabelCat`
 1.  `npm install`
 1.  `npm link .`
-1.  `cp defaultsettings.json settings.json` (`settings.json` is where you
+1.  `cd functions`
+
+    `cp defaultsettings.json settings.json` (`settings.json` is where you
     customize the app)
 1.  Modify `settings.json` as necessary.
 
