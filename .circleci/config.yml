@@ -47,7 +47,7 @@ jobs:
             cd ..
           environment:
             NPM_CONFIG_PREFIX: /home/node/.npm-global
-      - run: cp functions/defaultsettings.json functions/settings.json
+      - run: cp functions/settings.tmpl.json functions/settings.json
       - run: npm test
       - run: node_modules/.bin/codecov
   node10:
