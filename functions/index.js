@@ -5,17 +5,14 @@ log.setLevel('info');
 const automl = require('@google-cloud/automl');
 const PubSub = require(`@google-cloud/pubsub`);
 const octokit = require('@octokit/rest')();
+const client = new automl.v1beta1.PredictionServiceClient();
 
-/**
- * TODO(developer): Set the following...
- */
-// Your Google Cloud Platform project ID & compute region
 const projectId = settings.projectId;
 const computeRegion = settings.computeRegion;
-// Your Google Cloud AutoML NL model ID
 const modelId = settings.modelId;
-// Your Google Cloud Pub/Sub topic
 const topicName = settings.topicName;
+const SCORE_THRESHOLD = 70;
+
 /**
  * Verifies request has come from Github and publishes
  * message to specified Pub/Sub topic.
@@ -55,7 +52,7 @@ function validateRequest(req) {
 
 async function publishMessage(req) {
   try {
-    const text = req.body.issue.title + ' ' + req.body.issue.body;
+    const text = `${req.body.issue.title} ${req.body.issue.body}`;
     const data = JSON.stringify({
       owner: req.body.repository.owner.login,
       repo: req.body.repository.name,
@@ -116,8 +113,6 @@ async function triage(event, res) {
 }
 
 async function predict(text) {
-  const client = new automl.v1beta1.PredictionServiceClient();
-
   const modelFullId = client.modelPath(projectId, computeRegion, modelId);
 
   const payload = {
@@ -134,7 +129,7 @@ async function predict(text) {
       params: {},
     });
 
-    if (response[0].payload[1].classification.score > 89) {
+    if (response[0].payload[1].classification.score > SCORE_THRESHOLD) {
       return true;
     }
 

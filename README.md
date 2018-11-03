@@ -16,7 +16,9 @@ animal, that's why you need LabelCat.
 1.  `cd LabelCat`
 1.  `npm install`
 1.  `npm link .`
-1.  `cp defaultsettings.json settings.json` (`settings.json` is where you
+1.  `cd functions`
+
+    `cp settings.tmpl.json settings.json` (`settings.json` is where you
     customize the app)
 1.  Modify `settings.json` as necessary.
 
@@ -172,7 +174,7 @@ Examples:
 ## Deploy Cloud Functions
 1.  `cd Functions`
 1.  `npm install`
-1.  `cp defaultsettings.json settings.json`
+1.  `cp settings.tmpl.json settings.json`
 1.  Modify `settings.json` as necessary.
 1. `gcloud alpha functions deploy handleNewIssue --trigger-http --runtime nodejs8`
 1. `gcloud functions deploy triage --runtime nodejs8 --trigger-resource YOUR-PUB/SUB-TOPIC-NAME --trigger-event google.pubsub.topic.publish

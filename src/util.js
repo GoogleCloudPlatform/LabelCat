@@ -106,6 +106,7 @@ function cleanLabels(issue, opts) {
 function getIssueInfo(issue) {
   try {
     const raw = issue.title + ' ' + issue.body;
+    // remove punctuation that will interfere with csv
     const text = raw.replace(/[^\w\s]/gi, '');
     const labels = issue.labels.map(labelObject => labelObject.name);
 

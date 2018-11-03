@@ -7,7 +7,7 @@ module.exports = {
       labels: [
         {
           id: 949737505,
-          node_id: 'MDU6TGFiZWw5NDk3Mzc1MDU=',
+          node_id: 'MDU6TGFk3Mzc1MDU=',
           url: 'https://api.github.com/repos/Codertocat/Hello-World/labels/bug',
           name: 'bug',
           color: 'd73a4a',

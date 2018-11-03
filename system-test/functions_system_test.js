@@ -11,7 +11,7 @@ const supertest = require(`supertest`);
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
 
-const mockSettings = {
+const settingsMock = {
   secretToken: 'foo',
 };
 
@@ -20,7 +20,7 @@ function setup() {
   return {
     getHeader: () => {
       const digest = crypto
-        .createHmac('sha1', mockSettings.secretToken)
+        .createHmac('sha1', settingsMock.secretToken)
         .update(JSON.stringify(event.body))
         .digest('hex');
       return `sha1=${digest}`;
@@ -41,43 +41,48 @@ describe('handleNewIssue()', function() {
     app = express();
     const requestLimit = '1024mb';
 
-    const rawBodySaver = (req, res, buf) => {
+    const rawBody = (req, res, buf) => {
       req.rawBody = buf;
     };
 
-    const defaultBodySavingOptions = {
+    const defaultBodyOptions = {
       limit: requestLimit,
-      verify: rawBodySaver,
+      verify: rawBody,
     };
 
-    const rawBodySavingOptions = {
+    const rawBodyOptions = {
       limit: requestLimit,
-      verify: rawBodySaver,
+      verify: rawBody,
       type: '*/*',
     };
 
     // Use extended query string parsing for URL-encoded bodies.
     const urlEncodedOptions = {
       limit: requestLimit,
-      verify: rawBodySaver,
+      verify: rawBody,
       extended: true,
     };
 
     // Parse request body
-    app.use(bodyParser.json(defaultBodySavingOptions));
-    app.use(bodyParser.text(defaultBodySavingOptions));
+    app.use(bodyParser.json(defaultBodyOptions));
+    app.use(bodyParser.text(defaultBodyOptions));
     app.use(bodyParser.urlencoded(urlEncodedOptions));
 
     // MUST be last in the list of body parsers as subsequent parsers will be
     // skipped when one is matched.
-    app.use(bodyParser.raw(rawBodySavingOptions));
+    app.use(bodyParser.raw(rawBodyOptions));
 
     functs = proxyquire('../functions/index.js', {
       '@google-cloud/pubsub': pubsubMock,
-      './settings.json': mockSettings,
+      './settings.json': settingsMock,
     });
 
     app.post(`/handleNewIssue`, functs.handleNewIssue);
+  });
+
+  afterEach(() => {
+    issueEvent.body.action = 'opened';
+    issueEvent.body.issue.title = 'LABELCAT-TEST';
   });
 
   it('should validate request', function(done) {
@@ -106,11 +111,10 @@ describe('handleNewIssue()', function() {
   });
 
   it('should return if action is not opened', function(done) {
-    let wrongAction = issueEvent;
-    wrongAction.body.action = 'edited';
+    issueEvent.body.action = 'edited';
     supertest(app)
       .post(`/handleNewIssue`)
-      .send(wrongAction.body)
+      .send(issueEvent.body)
       .set('x-hub-signature', codeUnderTest.getHeader())
       .end(function(err, res) {
         assert.strictEqual(400, res.statusCode);
@@ -120,9 +124,8 @@ describe('handleNewIssue()', function() {
   });
 
   it('should not publish request with incorrect data', function(done) {
-    let wrongAction = issueEvent;
-    wrongAction.body.action = 'opened';
-    wrongAction.body.issue.title = undefined;
+    issueEvent.body.action = 'opened';
+    issueEvent.body.issue.title = undefined;
     supertest(app)
       .post(`/handleNewIssue`)
       .send({body: null})

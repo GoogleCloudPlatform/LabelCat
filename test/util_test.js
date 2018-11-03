@@ -8,12 +8,12 @@ const sinon = require('sinon');
 const assert = require('assert');
 
 describe('makeCSV()', function() {
-  const mockSettings = {
+  const settingsMock = {
     secretToken: 'foo',
   };
 
   const util = proxyquire('../src/util.js', {
-    '../functions/settings.json': mockSettings,
+    '../functions/settings.json': settingsMock,
   });
 
   it('should create a csv of issues', function() {
@@ -74,22 +74,22 @@ describe('retrieveIssues', () => {
     hasNext.returns(true);
     hasNext.onCall(1).returns(false);
 
-    const mockGet = sinon.stub().returns(Promise.resolve(issueData));
+    const getMock = sinon.stub().returns(Promise.resolve(issueData));
 
     octoMock = {
       authenticate: sinon.stub(),
-      issues: {getForRepo: mockGet},
+      issues: {getForRepo: getMock},
       hasNextPage: hasNext,
       getNextPage: getNext,
     };
 
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
     util = proxyquire('../src/util.js', {
       '@octokit/rest': () => octoMock,
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
   });
 
@@ -104,6 +104,7 @@ describe('retrieveIssues', () => {
     assert(result[1].text === 'another issue more details');
     assert(result[1].label === 1);
   });
+
   it('should throw an error', async () => {
     let label = 'type: bug';
 
@@ -127,13 +128,14 @@ describe('retrieveIssues', () => {
 
 describe('getIssueInfo()', function() {
   let originalIssue, returnedIssue, labelCount, util;
+
   beforeEach(() => {
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
     util = proxyquire('../src/util.js', {
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
 
     originalIssue = {
@@ -193,25 +195,26 @@ describe('createDataset()', function() {
       },
     ]);
 
-    const mockClient = sinon.stub().returns({
+    const clientMock = sinon.stub().returns({
       locationPath: location,
       createDataset: create,
     });
 
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const autoMlMock = {v1beta1: {AutoMlClient: clientMock}};
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
 
     util.createDataset(projectId, computeRegion, datasetName, multiLabel);
     sinon.assert.calledOnce(location);
     assert(location.calledWith(projectId, computeRegion));
   });
+
   it('should throw an error', function() {
     const location = sinon.spy();
     const create = sinon.stub().returns([
@@ -225,19 +228,19 @@ describe('createDataset()', function() {
       },
     ]);
 
-    const mockClient = sinon.stub().returns({
+    const clientMock = sinon.stub().returns({
       locationPath: location,
       createDataset: create,
     });
 
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const autoMlMock = {v1beta1: {AutoMlClient: clientMock}};
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
 
     util.createDataset(projectId, computeRegion, datasetName, multiLabel);
@@ -254,20 +257,20 @@ describe('importData()', function() {
     const path = sinon.spy();
     const imports = sinon.stub().returns();
 
-    const mockClient = sinon.stub().returns({
+    const clientMock = sinon.stub().returns({
       datasetPath: path,
       importData: imports,
     });
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const autoMlMock = {v1beta1: {AutoMlClient: clientMock}};
 
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
 
     util.importData(projectId, computeRegion, datasetId, file);
@@ -275,24 +278,25 @@ describe('importData()', function() {
     assert(path.calledWith(projectId, computeRegion, datasetId));
     sinon.assert.calledOnce(imports);
   });
+
   it('should throw an error', function() {
     const path = sinon.spy();
     const imports = sinon.stub().throws();
 
-    const mockClient = sinon.stub().returns({
+    const clientMock = sinon.stub().returns({
       datasetPath: path,
       importData: imports,
     });
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const autoMlMock = {v1beta1: {AutoMlClient: clientMock}};
 
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
 
     util.importData(projectId, computeRegion, datasetId, file);
@@ -318,20 +322,20 @@ describe('listDatasets()', function() {
       ],
     ]);
 
-    const mockClient = sinon.stub().returns({
+    const clientMock = sinon.stub().returns({
       locationPath: location,
       listDatasets: list,
     });
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const autoMlMock = {v1beta1: {AutoMlClient: clientMock}};
 
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
 
     await util.listDatasets(projectId, computeRegion);
@@ -340,6 +344,7 @@ describe('listDatasets()', function() {
     sinon.assert.calledOnce(location);
     assert(location.calledWith(projectId, computeRegion));
   });
+
   it('should throw an error', function() {
     const location = sinon.spy();
     const list = sinon.stub().returns([
@@ -351,26 +356,26 @@ describe('listDatasets()', function() {
       ],
     ]);
 
-    const mockClient = sinon.stub().returns({
+    const clientMock = sinon.stub().returns({
       locationPath: location,
       listDatasets: list,
     });
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const autoMlMock = {v1beta1: {AutoMlClient: clientMock}};
 
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
 
     util.listDatasets(projectId, computeRegion);
   });
 });
-// createModel(projectId, computeRegion, datasetId, modelName);
+
 describe('createModel()', function() {
   const projectId = 'test-project';
   const computeRegion = 'us-central1';
@@ -391,19 +396,19 @@ describe('createModel()', function() {
       },
     ]);
 
-    const mockClient = sinon.stub().returns({
+    const clientMock = sinon.stub().returns({
       locationPath: location,
       createModel: create,
     });
 
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const autoMlMock = {v1beta1: {AutoMlClient: clientMock}};
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
 
     await util.createModel(projectId, computeRegion, '123456ABC', 'testModel');
@@ -412,24 +417,25 @@ describe('createModel()', function() {
     sinon.assert.calledOnce(location);
     assert(location.calledWith(projectId, computeRegion));
   });
+
   it('should throw an error', async function() {
     const location = sinon.spy();
     const create = sinon.stub().returns([]);
 
-    const mockClient = sinon.stub().returns({
+    const clientMock = sinon.stub().returns({
       locationPath: location,
       createModel: create,
     });
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
+    const autoMlMock = {v1beta1: {AutoMlClient: clientMock}};
 
-    const mockSettings = {
+    const settingsMock = {
       secretToken: 'foo',
     };
 
     const util = proxyquire('../src/util.js', {
       '@google-cloud/automl': autoMlMock,
-      '../functions/settings.json': mockSettings,
+      '../functions/settings.json': settingsMock,
     });
 
     await util.createModel(projectId, computeRegion, '123456ABC', 'testModel');
