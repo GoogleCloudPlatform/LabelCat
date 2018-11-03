@@ -37,47 +37,47 @@ describe('handleNewIssue()', function() {
   const pubsubMock = sinon.stub().returns({topic: topicMock});
 
   beforeEach(() => {
-    codeUnderTest = setup();
-    app = express();
-    const requestLimit = '1024mb';
+   codeUnderTest = setup();
+   app = express();
+   const requestLimit = '1024mb';
 
-    const rawBody = (req, res, buf) => {
-      req.rawBody = buf;
-    };
+   const rawBodySaver = (req, res, buf) => {
+     req.rawBody = buf;
+   };
 
-    const defaultBodyOptions = {
-      limit: requestLimit,
-      verify: rawBody,
-    };
+   const defaultBodySavingOptions = {
+     limit: requestLimit,
+     verify: rawBodySaver,
+   };
 
-    const rawBodyOptions = {
-      limit: requestLimit,
-      verify: rawBody,
-      type: '*/*',
-    };
+   const rawBodySavingOptions = {
+     limit: requestLimit,
+     verify: rawBodySaver,
+     type: '*/*',
+   };
 
-    // Use extended query string parsing for URL-encoded bodies.
-    const urlEncodedOptions = {
-      limit: requestLimit,
-      verify: rawBody,
-      extended: true,
-    };
+   // Use extended query string parsing for URL-encoded bodies.
+   const urlEncodedOptions = {
+     limit: requestLimit,
+     verify: rawBodySaver,
+     extended: true,
+   };
 
-    // Parse request body
-    app.use(bodyParser.json(defaultBodyOptions));
-    app.use(bodyParser.text(defaultBodyOptions));
-    app.use(bodyParser.urlencoded(urlEncodedOptions));
+   // Parse request body
+   app.use(bodyParser.json(defaultBodySavingOptions));
+   app.use(bodyParser.text(defaultBodySavingOptions));
+   app.use(bodyParser.urlencoded(urlEncodedOptions));
 
-    // MUST be last in the list of body parsers as subsequent parsers will be
-    // skipped when one is matched.
-    app.use(bodyParser.raw(rawBodyOptions));
+   // MUST be last in the list of body parsers as subsequent parsers will be
+   // skipped when one is matched.
+   app.use(bodyParser.raw(rawBodySavingOptions));
 
-    functs = proxyquire('../functions/index.js', {
-      '@google-cloud/pubsub': pubsubMock,
-      './settings.json': settingsMock,
-    });
+   functs = proxyquire('../functions/index.js', {
+     '@google-cloud/pubsub': pubsubMock,
+     './settings.json': settingsMock,
+   });
 
-    app.post(`/handleNewIssue`, functs.handleNewIssue);
+   app.post(`/handleNewIssue`, functs.handleNewIssue);
   });
 
   afterEach(() => {
