@@ -11,7 +11,7 @@ const PROJECT_ID = settings.PROJECT_ID;
 const COMPUTE_REGION = settings.COMPUTE_REGION;
 const MODEL_ID = settings.MODEL_ID;
 const TOPIC_NAME = settings.TOPIC_NAME;
-const SECRET_TOKEN = settings.SECRET_TOKEN
+const SECRET_TOKEN = settings.SECRET_TOKEN;
 const SCORE_THRESHOLD = 70;
 
 /**

@@ -201,7 +201,11 @@ async function importData(PROJECT_ID, COMPUTE_REGION, datasetId, path) {
   const client = new automl.v1beta1.AutoMlClient();
 
   // Get the full path of the dataset.
-  const datasetFullId = client.datasetPath(PROJECT_ID, COMPUTE_REGION, datasetId);
+  const datasetFullId = client.datasetPath(
+    PROJECT_ID,
+    COMPUTE_REGION,
+    datasetId
+  );
 
   // Get the Google Cloud Storage URIs.
   const inputUris = path.split(`,`);
