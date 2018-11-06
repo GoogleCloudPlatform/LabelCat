@@ -7,10 +7,10 @@ const PubSub = require(`@google-cloud/pubsub`);
 const octokit = require('@octokit/rest')();
 const client = new automl.v1beta1.PredictionServiceClient();
 
-const projectId = settings.projectId;
-const computeRegion = settings.computeRegion;
-const modelId = settings.modelId;
-const topicName = settings.topicName;
+const PROJECT_ID = settings.PROJECT_ID;
+const COMPUTE_REGION = settings.COMPUTE_REGION;
+const MODEL_ID = settings.MODEL_ID;
+const TOPIC_NAME = settings.TOPIC_NAME;
 const SCORE_THRESHOLD = 70;
 
 /**
@@ -39,7 +39,7 @@ async function handleNewIssue(req, res) {
 function validateRequest(req) {
   return Promise.resolve().then(() => {
     const digest = crypto
-      .createHmac('sha1', settings.secretToken)
+      .createHmac('sha1', settings.SECRET_TOKEN)
       .update(JSON.stringify(req.body))
       .digest('hex');
     if (req.headers['x-hub-signature'] !== `sha1=${digest}`) {
@@ -62,11 +62,11 @@ async function publishMessage(req) {
     const dataBuffer = Buffer.from(data);
 
     const pubsubClient = new PubSub({
-      projectId: projectId,
+      PROJECT_ID: PROJECT_ID,
     });
 
     const response = await pubsubClient
-      .topic(topicName)
+      .topic(TOPIC_NAME)
       .publisher()
       .publish(dataBuffer);
     return response;
@@ -78,7 +78,7 @@ async function publishMessage(req) {
 async function triage(event, res) {
   octokit.authenticate({
     type: 'oauth',
-    token: settings.secretToken,
+    token: settings.SECRET_TOKEN,
   });
 
   const pubSubMessage = event.data;
@@ -113,7 +113,7 @@ async function triage(event, res) {
 }
 
 async function predict(text) {
-  const modelFullId = client.modelPath(projectId, computeRegion, modelId);
+  const modelFullId = client.modelPath(PROJECT_ID, COMPUTE_REGION, MODEL_ID);
 
   const payload = {
     textSnippet: {

@@ -18,7 +18,7 @@ const automl = require(`@google-cloud/automl`);
 async function retrieveIssues(data, label, alternatives) {
   octokit.authenticate({
     type: 'oauth',
-    token: settings.secretToken,
+    token: settings.SECRET_TOKEN,
   });
 
   log.info('RETRIEVING ISSUES...');
@@ -135,20 +135,20 @@ function makeCSV(issues, file) {
 
 /**
  * Create a Google AutoML Natural Language dataset
- * @param {string} projectId
- * @param {string} computeRegion
+ * @param {string} PROJECT_ID
+ * @param {string} COMPUTE_REGION
  * @param {string} datasetName
  * @param {string} multiLabel
  */
 async function createDataset(
-  projectId,
-  computeRegion,
+  PROJECT_ID,
+  COMPUTE_REGION,
   datasetName,
   multiLabel
 ) {
   const automl = require(`@google-cloud/automl`);
   const client = new automl.v1beta1.AutoMlClient();
-  const projectLocation = client.locationPath(projectId, computeRegion);
+  const projectLocation = client.locationPath(PROJECT_ID, COMPUTE_REGION);
 
   // Classification type is assigned based on multiClass value.
   let classificationType = `MULTICLASS`;
@@ -192,16 +192,16 @@ async function createDataset(
 
 /**
  * Import data into Google AutoML NL dataset
- * @param {string} projectId
- * @param {string} computeRegion
+ * @param {string} PROJECT_ID
+ * @param {string} COMPUTE_REGION
  * @param {string} datasetId
  * @param {string} path
  */
-async function importData(projectId, computeRegion, datasetId, path) {
+async function importData(PROJECT_ID, COMPUTE_REGION, datasetId, path) {
   const client = new automl.v1beta1.AutoMlClient();
 
   // Get the full path of the dataset.
-  const datasetFullId = client.datasetPath(projectId, computeRegion, datasetId);
+  const datasetFullId = client.datasetPath(PROJECT_ID, COMPUTE_REGION, datasetId);
 
   // Get the Google Cloud Storage URIs.
   const inputUris = path.split(`,`);
@@ -223,9 +223,9 @@ async function importData(projectId, computeRegion, datasetId, path) {
   }
 }
 
-async function listDatasets(projectId, computeRegion) {
+async function listDatasets(PROJECT_ID, COMPUTE_REGION) {
   const client = new automl.v1beta1.AutoMlClient();
-  const projectLocation = client.locationPath(projectId, computeRegion);
+  const projectLocation = client.locationPath(PROJECT_ID, COMPUTE_REGION);
 
   try {
     const responses = await client.listDatasets({parent: projectLocation});
@@ -248,11 +248,11 @@ async function listDatasets(projectId, computeRegion) {
   }
 }
 
-async function createModel(projectId, computeRegion, datasetId, modelName) {
+async function createModel(PROJECT_ID, COMPUTE_REGION, datasetId, modelName) {
   const client = new automl.v1beta1.AutoMlClient();
 
   // A resource that represents Google Cloud Platform location.
-  const projectLocation = client.locationPath(projectId, computeRegion);
+  const projectLocation = client.locationPath(PROJECT_ID, COMPUTE_REGION);
 
   // Set model name and model metadata for the dataset.
   const myModel = {

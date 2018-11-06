@@ -1,7 +1,0 @@
-{
-  "secretToken": "YOUR GITHUB CLIENT ID HERE",
-  "projectID": "YOUR GCP PROJECT ID HERE",
-  "computeRegion": "YOUR GCP PROJECT COMPUTE REGION HERE",
-  "modelId": "YOUR AUTOML NL MODEL ID HERE",
-  "topicName": "YOUR PUB/SUB TOPIC NAME HERE"
-}

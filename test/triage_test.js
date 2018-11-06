@@ -81,11 +81,11 @@ beforeEach(() => {
   autoMlMock = {v1beta1: {PredictionServiceClient: clientMock}};
 
   settingsMock = {
-    secretToken: 'foo',
-    projectId: 'test-project',
-    computeRegion: 'uscentral',
-    topicName: 'testTopic',
-    modelId: 'test-model',
+    SECRET_TOKEN: 'foo',
+    PROJECT_ID: 'test-project',
+    COMPUTE_REGION: 'uscentral',
+    TOPIC_NAME: 'testTopic',
+    MODEL_ID: 'test-model',
   };
 });
 

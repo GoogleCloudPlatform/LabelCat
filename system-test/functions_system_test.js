@@ -12,7 +12,7 @@ const bodyParser = require('body-parser');
 const crypto = require('crypto');
 
 const settingsMock = {
-  secretToken: 'foo',
+  SECRET_TOKEN: 'foo',
 };
 
 function setup() {
@@ -20,7 +20,7 @@ function setup() {
   return {
     getHeader: () => {
       const digest = crypto
-        .createHmac('sha1', settingsMock.secretToken)
+        .createHmac('sha1', settingsMock.SECRET_TOKEN)
         .update(JSON.stringify(event.body))
         .digest('hex');
       return `sha1=${digest}`;
