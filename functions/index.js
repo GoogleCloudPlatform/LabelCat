@@ -11,6 +11,7 @@ const PROJECT_ID = settings.PROJECT_ID;
 const COMPUTE_REGION = settings.COMPUTE_REGION;
 const MODEL_ID = settings.MODEL_ID;
 const TOPIC_NAME = settings.TOPIC_NAME;
+const SECRET_TOKEN = settings.SECRET_TOKEN
 const SCORE_THRESHOLD = 70;
 
 /**
@@ -39,7 +40,7 @@ async function handleNewIssue(req, res) {
 function validateRequest(req) {
   return Promise.resolve().then(() => {
     const digest = crypto
-      .createHmac('sha1', settings.SECRET_TOKEN)
+      .createHmac('sha1', SECRET_TOKEN)
       .update(JSON.stringify(req.body))
       .digest('hex');
     if (req.headers['x-hub-signature'] !== `sha1=${digest}`) {
