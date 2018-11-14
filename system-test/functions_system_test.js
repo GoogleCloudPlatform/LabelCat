@@ -35,6 +35,12 @@ describe('handleNewIssue()', function() {
   const publisherMock = sinon.stub().returns({publish: publishMock});
   const topicMock = sinon.stub().returns({publisher: publisherMock});
   const pubsubMock = sinon.stub().returns({topic: topicMock});
+  const automlClientMock = {};
+  const automlMock = {
+    v1beta1: {
+      PredictionServiceClient: sinon.stub().returns(automlClientMock)
+    }
+  };
 
   beforeEach(() => {
     codeUnderTest = setup();
@@ -73,6 +79,7 @@ describe('handleNewIssue()', function() {
     app.use(bodyParser.raw(rawBodySavingOptions));
 
     functs = proxyquire('../functions/index.js', {
+      '@google-cloud/automl': automlMock,
       '@google-cloud/pubsub': pubsubMock,
       './settings.json': settingsMock,
     });

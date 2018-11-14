@@ -31,7 +31,7 @@
     "prettier": "prettier --write bin/*.js src/*.js test/*.js system-test/*.js functions/*.js",
     "system-test": "mocha system-test/*.js --timeout 600000",
     "test-no-cover": "mocha test/*.js",
-    "test": "mocha system-test/functions_system_test.js --timeout 600000"
+    "test": "npm run cover"
   },
   "dependencies": {
     "@google-cloud/automl": "^0.1.2",
