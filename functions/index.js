@@ -76,7 +76,7 @@ async function publishMessage(req) {
   }
 }
 
-async function triage(event, context) {
+async function triage(event) {
   octokit.authenticate({
     type: 'oauth',
     token: settings.SECRET_TOKEN,

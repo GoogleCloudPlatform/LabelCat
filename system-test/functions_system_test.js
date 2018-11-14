@@ -38,8 +38,8 @@ describe('handleNewIssue()', function() {
   const automlClientMock = {};
   const automlMock = {
     v1beta1: {
-      PredictionServiceClient: sinon.stub().returns(automlClientMock)
-    }
+      PredictionServiceClient: sinon.stub().returns(automlClientMock),
+    },
   };
 
   beforeEach(() => {
