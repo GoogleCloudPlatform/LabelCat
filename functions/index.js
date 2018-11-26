@@ -1,11 +1,11 @@
 const settings = require('./settings.json'); // eslint-disable-line node/no-missing-require
 const crypto = require('crypto');
-const log = require('loglevel');
-log.setLevel('info');
 const automl = require('@google-cloud/automl');
 const PubSub = require(`@google-cloud/pubsub`);
 const octokit = require('@octokit/rest')();
 const client = new automl.v1beta1.PredictionServiceClient();
+const log = require('loglevel');
+log.setLevel('info');
 
 const PROJECT_ID = settings.PROJECT_ID;
 const COMPUTE_REGION = settings.COMPUTE_REGION;
@@ -76,13 +76,19 @@ async function publishMessage(req) {
   }
 }
 
-async function triage(event, res) {
+/**
+ * receives message from handleNewIssue cloud function,
+ * runs label prediction using assigned Google AutoML Natural Language model
+ * @param {object} req
+ * @param {object} res
+ */
+async function triage(req, res) {
   octokit.authenticate({
     type: 'oauth',
     token: settings.SECRET_TOKEN,
   });
 
-  const pubSubMessage = event.data;
+  const pubSubMessage = req.data;
   let issueData = Buffer.from(pubSubMessage.data, 'base64').toString();
   issueData = JSON.parse(issueData);
   const owner = issueData.owner;

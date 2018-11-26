@@ -76,7 +76,7 @@ require(`yargs`)
   )
   .command(
     `listDatasets`,
-    `Train an AutoML NL model using existing dataset.`,
+    `Lists all AutoML NL datasets for current Google Cloud Platform project.`,
     {},
     () => {
       const projectId = settings.projectId;
