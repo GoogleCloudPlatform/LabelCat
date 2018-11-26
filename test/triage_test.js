@@ -109,11 +109,15 @@ describe('triage()', function() {
   it('should throw error if unauthorized gitHub user', async () => {
     functions = proxyquire('../functions/index.js', {
       './settings.json': settingsMock,
+      '@google-cloud/automl': autoMlMock,
       '@google-cloud/pubsub': sinon.stub(),
     });
 
-    let result = await functions.triage({data: {data: dataBuffer}});
-    assert(result.labeled === false);
-    assert(result.number === ISSUE_NUMBER);
+    try {
+      await functions.triage({data: {data: dataBuffer}});
+      assert.fail('triage should have failed');
+    } catch (err) {
+      assert(JSON.parse(err.message).message === 'Bad credentials');
+    }
   });
 });

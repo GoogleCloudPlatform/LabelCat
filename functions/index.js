@@ -82,7 +82,7 @@ async function publishMessage(req) {
  * @param {object} req
  * @param {object} res
  */
-async function triage(req, res) {
+async function triage(req) {
   octokit.authenticate({
     type: 'oauth',
     token: settings.SECRET_TOKEN,
@@ -95,28 +95,24 @@ async function triage(req, res) {
   const repo = issueData.repo;
   const number = issueData.number;
 
-  try {
-    issueData.labeled = false;
-    let results = await predict(issueData.text);
+  issueData.labeled = false;
+  let results = await predict(issueData.text);
 
-    if (results) {
-      const labels = ['bug'];
-      const response = await octokit.issues.addLabels({
-        owner: owner,
-        repo: repo,
-        number: number,
-        labels: labels,
-      });
+  if (results) {
+    const labels = ['bug'];
+    const response = await octokit.issues.addLabels({
+      owner: owner,
+      repo: repo,
+      number: number,
+      labels: labels,
+    });
 
-      if (response.status === 200) {
-        issueData.labeled = true;
-      }
+    if (response.status === 200) {
+      issueData.labeled = true;
     }
-
-    return issueData;
-  } catch (err) {
-    res.status(403).send({error: err.message});
   }
+
+  return issueData;
 }
 
 async function predict(text) {

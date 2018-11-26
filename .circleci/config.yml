@@ -3,25 +3,18 @@ workflows:
   version: 2
   tests:
     jobs: &workflow_jobs
-      - node8:
+      - lint:
           filters: &all_commits
             tags:
               only: /.*/
-      - node10:
-          filters: *all_commits
-      - lint:
-          requires:
-            - node8
-            - node10
-          filters: *all_commits
-      - tests:
+      - node8:
           requires:
             - lint
-          filters: &master_and_releases
-            branches:
-              only: master
-            tags: &releases
-              only: '/^v[\d.]+$/'
+          filters: *all_commits
+      - node10:
+          requires:
+            - lint
+          filters: *all_commits
   nightly:
     triggers:
       - schedule:
@@ -31,11 +24,11 @@ workflows:
               only: master
     jobs: *workflow_jobs
 jobs:
-  node8:
+  lint:
     docker:
       - image: 'node:8'
         user: node
-    steps: &unit_tests_steps
+    steps:
       - checkout
       - run: &npm_install_and_link
           name: Install and link the module
@@ -47,31 +40,16 @@ jobs:
             cd ..
           environment:
             NPM_CONFIG_PREFIX: /home/node/.npm-global
-      - run: cp functions/settings.tmpl.json functions/settings.json
-      - run: npm test
-      - run: node_modules/.bin/codecov
-  node10:
-    docker:
-      - image: 'node:10'
-        user: node
-    steps: *unit_tests_steps
-  lint:
-    docker:
-      - image: 'node:8'
-        user: node
-    steps:
-      - checkout
-      - run: *npm_install_and_link
       - run:
           name: Run linting.
           command: npm run lint
           environment:
             NPM_CONFIG_PREFIX: /home/node/.npm-global
-  system-tests:
+  node8:
     docker:
       - image: 'node:8'
         user: node
-    steps:
+    steps: &tests_steps
       - checkout
       - run:
           name: Decrypt credentials.
@@ -84,12 +62,14 @@ jobs:
               done
             fi
       - run: *npm_install_and_link
+      - run: cp functions/settings.tmpl.json functions/settings.json
       - run:
-          name: Run the system tests.
-          command: npm run system-test
+          name: Run the tests.
+          command: npm test
           environment:
             GCLOUD_PROJECT: label-cat
             GOOGLE_APPLICATION_CREDENTIALS: .circleci/key.json
+      - run: node_modules/.bin/codecov
       - run:
           name: Remove unencrypted key.
           command: |
@@ -97,3 +77,8 @@ jobs:
               rm .circleci/*.json
             fi
           when: always
+  node10:
+    docker:
+      - image: 'node:10'
+        user: node
+    steps: *tests_steps
