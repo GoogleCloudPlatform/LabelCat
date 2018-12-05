@@ -91,20 +91,16 @@ async function triage(req) {
   const pubSubMessage = req.data;
   let issueData = Buffer.from(pubSubMessage.data, 'base64').toString();
   issueData = JSON.parse(issueData);
-  const owner = issueData.owner;
-  const repo = issueData.repo;
-  const number = issueData.number;
 
   issueData.labeled = false;
   let results = await predict(issueData.text);
 
   if (results) {
-    const labels = ['bug'];
     const response = await octokit.issues.addLabels({
-      owner: owner,
-      repo: repo,
-      number: number,
-      labels: labels,
+      owner: issueData.owner,
+      repo: issueData.repo,
+      number: issueData.number,
+      labels: ['bug'],
     });
 
     if (response.status === 200) {

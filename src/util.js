@@ -114,7 +114,7 @@ function cleanLabels(issue, labelList) {
  */
 function getIssueInfo(issue) {
   try {
-    const raw = issue.title + ' ' + issue.body;
+    const raw = `${issue.title} ${issue.body}`;
 
     // remove punctuation that will interfere with csv
     const text = raw.replace(/[^\w\s]/gi, '');
@@ -145,20 +145,20 @@ function makeCSV(issues, file) {
 
 /**
  * Create a Google AutoML Natural Language dataset
- * @param {string} PROJECT_ID
- * @param {string} COMPUTE_REGION
+ * @param {string} projectId
+ * @param {string} computeRegion
  * @param {string} datasetName
  * @param {string} multiLabel
  */
 async function createDataset(
-  PROJECT_ID,
-  COMPUTE_REGION,
+  projectId,
+  computeRegion,
   datasetName,
   multiLabel
 ) {
   const automl = require(`@google-cloud/automl`);
   const client = new automl.v1beta1.AutoMlClient();
-  const projectLocation = client.locationPath(PROJECT_ID, COMPUTE_REGION);
+  const projectLocation = client.locationPath(projectId, computeRegion);
 
   // Classification type is assigned based on multiClass value
   let classificationType = `MULTICLASS`;
@@ -202,20 +202,16 @@ async function createDataset(
 
 /**
  * Import data into Google AutoML Natural Language dataset
- * @param {string} PROJECT_ID
- * @param {string} COMPUTE_REGION
+ * @param {string} projectId
+ * @param {string} computeRegion
  * @param {string} datasetId
  * @param {string} path
  */
-async function importData(PROJECT_ID, COMPUTE_REGION, datasetId, path) {
+async function importData(projectId, computeRegion, datasetId, path) {
   const client = new automl.v1beta1.AutoMlClient();
 
   // Get the full path of the dataset.
-  const datasetFullId = client.datasetPath(
-    PROJECT_ID,
-    COMPUTE_REGION,
-    datasetId
-  );
+  const datasetFullId = client.datasetPath(projectId, computeRegion, datasetId);
 
   // Get the Google Cloud Storage URIs.
   const inputUris = path.split(`,`);
@@ -239,12 +235,12 @@ async function importData(PROJECT_ID, COMPUTE_REGION, datasetId, path) {
 
 /**
  * List AutoML Natural Language datasets for current GCP project
- * @param {string} PROJECT_ID
- * @param {string} COMPUTE_REGION
+ * @param {string} projectId
+ * @param {string} computeRegion
  */
-async function listDatasets(PROJECT_ID, COMPUTE_REGION) {
+async function listDatasets(projectId, computeRegion) {
   const client = new automl.v1beta1.AutoMlClient();
-  const projectLocation = client.locationPath(PROJECT_ID, COMPUTE_REGION);
+  const projectLocation = client.locationPath(projectId, computeRegion);
 
   try {
     const responses = await client.listDatasets({parent: projectLocation});
@@ -269,16 +265,16 @@ async function listDatasets(PROJECT_ID, COMPUTE_REGION) {
 
 /**
  * Create Google AutoML Natural Language model
- * @param {string} PROJECT_ID
- * @param {string} COMPUTE_REGION
+ * @param {string} projectId
+ * @param {string} computeRegion
  * @param {string} datasetId
  * @param {string} modelName
  */
-async function createModel(PROJECT_ID, COMPUTE_REGION, datasetId, modelName) {
+async function createModel(projectId, computeRegion, datasetId, modelName) {
   const client = new automl.v1beta1.AutoMlClient();
 
   // A resource that represents Google Cloud Platform location.
-  const projectLocation = client.locationPath(PROJECT_ID, COMPUTE_REGION);
+  const projectLocation = client.locationPath(projectId, computeRegion);
 
   // Set model name and model metadata for the dataset.
   const myModel = {
