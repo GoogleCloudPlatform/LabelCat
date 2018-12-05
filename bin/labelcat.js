@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const util = require('../src/util.js');
-const settings = require('../settings.json'); // eslint-disable-line node/no-missing-require
+const settings = require('../functions/settings.json'); // eslint-disable-line node/no-missing-require
 
 require(`yargs`)
   .demand(1)
@@ -76,7 +76,7 @@ require(`yargs`)
   )
   .command(
     `listDatasets`,
-    `Train an AutoML NL model using existing dataset.`,
+    `Lists all AutoML NL datasets for current Google Cloud Platform project.`,
     {},
     () => {
       const projectId = settings.projectId;

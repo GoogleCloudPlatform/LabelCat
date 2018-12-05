@@ -1,14 +1,75 @@
-const util = require('../src/util.js');
 const fs = require('fs');
 const mocha = require('mocha');
 const describe = mocha.describe;
 const it = mocha.it;
 const beforeEach = mocha.beforeEach;
-const proxyquire = require('proxyquire');
+const proxyquire = require('proxyquire').noCallThru();
 const sinon = require('sinon');
 const assert = require('assert');
 
+function getMocks() {
+  const path = sinon.stub();
+  const imports = sinon.stub().returns();
+  const location = sinon.spy();
+  const create = sinon.stub();
+  const list = sinon.stub();
+  const getNext = sinon.stub();
+  const hasNext = sinon.stub();
+  const getRepoMock = sinon.stub();
+
+  const settingsMock = {
+    secretToken: 'foo',
+  };
+
+  const octoMock = {
+    authenticate: sinon.stub(),
+    issues: {getForRepo: getRepoMock},
+    hasNextPage: hasNext,
+    getNextPage: getNext,
+  };
+
+  const clientMock = sinon.stub().returns({
+    datasetPath: path,
+    importData: imports,
+    locationPath: location,
+    createDataset: create,
+    listDatasets: list,
+    createModel: create,
+  });
+
+  const autoMlMock = {v1beta1: {AutoMlClient: clientMock}};
+
+  return {
+    util: proxyquire('../src/util.js', {
+      '@google-cloud/automl': autoMlMock,
+      '../functions/settings.json': settingsMock,
+      '@octokit/rest': () => octoMock,
+    }),
+    mocks: {
+      list: list,
+      path: path,
+      create: create,
+      imports: imports,
+      getNext: getNext,
+      hasNext: hasNext,
+      location: location,
+      clientMock: clientMock,
+      autoMlMock: autoMlMock,
+      getRepoMock: getRepoMock,
+      settingsMock: settingsMock,
+    },
+  };
+}
+
 describe('makeCSV()', function() {
+  const settingsMock = {
+    secretToken: 'foo',
+  };
+
+  const util = proxyquire('../src/util.js', {
+    '../functions/settings.json': settingsMock,
+  });
+
   it('should create a csv of issues', function() {
     const issues = [
       {
@@ -39,7 +100,7 @@ describe('makeCSV()', function() {
 });
 
 describe('retrieveIssues', () => {
-  let util, octoMock;
+  let mockData;
 
   beforeEach(() => {
     const issueData = {
@@ -62,28 +123,21 @@ describe('retrieveIssues', () => {
       ],
     };
 
-    const getNext = sinon.stub().returns(issueData);
-    const hasNext = sinon.stub();
-    hasNext.returns(true);
-    hasNext.onCall(1).returns(false);
-
-    const mockGet = sinon.stub().returns(Promise.resolve(issueData));
-
-    octoMock = {
-      authenticate: sinon.stub(),
-      issues: {getForRepo: mockGet},
-      hasNextPage: hasNext,
-      getNextPage: getNext,
-    };
-    util = proxyquire('../src/util.js', {
-      '@octokit/rest': () => octoMock,
-    });
+    mockData = getMocks();
+    mockData.mocks.getNext.returns(issueData);
+    mockData.mocks.hasNext.returns(true);
+    mockData.mocks.hasNext.onCall(1).returns(false);
+    mockData.mocks.getRepoMock.returns(Promise.resolve(issueData));
   });
 
   it('should pass new issue object to makeCSV', async () => {
     const label = 'type: bug';
     const alt = ['bug'];
-    const result = await util.retrieveIssues('test/test_repos.txt', label, alt);
+    const result = await mockData.util.retrieveIssues(
+      'test/test_repos.txt',
+      label,
+      alt
+    );
 
     assert(result.length === 6);
     assert(result[0].text === 'issue details');
@@ -91,6 +145,7 @@ describe('retrieveIssues', () => {
     assert(result[1].text === 'another issue more details');
     assert(result[1].label === 1);
   });
+
   it('should throw an error', async () => {
     let label = 'type: bug';
 
@@ -101,20 +156,28 @@ describe('retrieveIssues', () => {
       },
     });
 
-    octoMock.issues.getForRepo.returns(expectedResponse);
+    mockData.mocks.getRepoMock.returns(expectedResponse);
+    mockData.mocks.hasNextPage = sinon.spy();
+    mockData.mocks.getNextPage = sinon.spy();
 
-    const result = await util.retrieveIssues('test/test_repos.txt', label);
+    const result = await mockData.util.retrieveIssues(
+      'test/test_repos.txt',
+      label
+    );
 
     assert(result === undefined);
-    sinon.assert.calledOnce(octoMock.issues.getForRepo);
-    sinon.assert.notCalled(octoMock.hasNextPage);
-    sinon.assert.notCalled(octoMock.getNextPage);
+    sinon.assert.calledOnce(mockData.mocks.getRepoMock);
+    sinon.assert.notCalled(mockData.mocks.hasNextPage);
+    sinon.assert.notCalled(mockData.mocks.getNextPage);
   });
 });
 
 describe('getIssueInfo()', function() {
-  let originalIssue, returnedIssue, labelCount;
+  let originalIssue, returnedIssue, labelCount, mockData;
+
   beforeEach(() => {
+    mockData = getMocks();
+
     originalIssue = {
       id: 1,
       node_id: 'MDU6SXNWUx',
@@ -133,7 +196,8 @@ describe('getIssueInfo()', function() {
   });
 
   it('should return issue object with text & labels keys', async function() {
-    const result = await util.getIssueInfo(originalIssue);
+    const result = await mockData.util.getIssueInfo(originalIssue);
+
     assert.strictEqual(
       Object.keys(result).length,
       Object.keys(returnedIssue).length
@@ -149,20 +213,24 @@ describe('getIssueInfo()', function() {
       body: 'issue body',
     };
 
-    let result = await util.getIssueInfo(badIssue, labelCount);
+    const result = await mockData.util.getIssueInfo(badIssue, labelCount);
     assert(result === undefined);
   });
 });
 
 describe('createDataset()', function() {
+  let mockData;
   const projectId = 'test-project';
   const computeRegion = 'us-central1';
   const datasetName = 'testSet';
   const multiLabel = 'false';
 
+  beforeEach(() => {
+    mockData = getMocks();
+  });
+
   it('should create a Google AutoML Natural Language dataset', function() {
-    const location = sinon.spy();
-    const create = sinon.stub().returns([
+    mockData.mocks.create.returns([
       {
         name: 'dataset/location/378646',
         displayName: 'testSet',
@@ -172,23 +240,19 @@ describe('createDataset()', function() {
       },
     ]);
 
-    const mockClient = sinon.stub().returns({
-      locationPath: location,
-      createDataset: create,
-    });
+    mockData.util.createDataset(
+      projectId,
+      computeRegion,
+      datasetName,
+      multiLabel
+    );
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
-    const util = proxyquire('../src/util.js', {
-      '@google-cloud/automl': autoMlMock,
-    });
-
-    util.createDataset(projectId, computeRegion, datasetName, multiLabel);
-    sinon.assert.calledOnce(location);
-    assert(location.calledWith(projectId, computeRegion));
+    sinon.assert.calledOnce(mockData.mocks.location);
+    assert(mockData.mocks.location.calledWith(projectId, computeRegion));
   });
+
   it('should throw an error', function() {
-    const location = sinon.spy();
-    const create = sinon.stub().returns([
+    mockData.mocks.create.returns([
       {
         err: 'error',
         name: 'dataset/location/378646',
@@ -199,70 +263,52 @@ describe('createDataset()', function() {
       },
     ]);
 
-    const mockClient = sinon.stub().returns({
-      locationPath: location,
-      createDataset: create,
-    });
-
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
-    const util = proxyquire('../src/util.js', {
-      '@google-cloud/automl': autoMlMock,
-    });
-
-    util.createDataset(projectId, computeRegion, datasetName, multiLabel);
+    mockData.util.createDataset(
+      projectId,
+      computeRegion,
+      datasetName,
+      multiLabel
+    );
   });
 });
 
 describe('importData()', function() {
+  let mockData;
+
   const projectId = 'test-project';
   const computeRegion = 'us-central1';
   const datasetId = '123TEST4567';
   const file = 'gs://testbucket-lcm/testIssues.csv';
 
-  it('should import data into AutoML NL dataset', function() {
-    const path = sinon.spy();
-    const imports = sinon.stub().returns();
-
-    const mockClient = sinon.stub().returns({
-      datasetPath: path,
-      importData: imports,
-    });
-
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
-    const util = proxyquire('../src/util.js', {
-      '@google-cloud/automl': autoMlMock,
-    });
-
-    util.importData(projectId, computeRegion, datasetId, file);
-    sinon.assert.calledOnce(path);
-    assert(path.calledWith(projectId, computeRegion, datasetId));
-    sinon.assert.calledOnce(imports);
+  beforeEach(() => {
+    mockData = getMocks();
   });
+
+  it('should import data into AutoML NL dataset', function() {
+    mockData.util.importData(projectId, computeRegion, datasetId, file);
+
+    sinon.assert.calledOnce(mockData.mocks.path);
+    assert(mockData.mocks.path.calledWith(projectId, computeRegion, datasetId));
+    sinon.assert.calledOnce(mockData.mocks.imports);
+  });
+
   it('should throw an error', function() {
-    const path = sinon.spy();
-    const imports = sinon.stub().throws();
-
-    const mockClient = sinon.stub().returns({
-      datasetPath: path,
-      importData: imports,
-    });
-
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
-    const util = proxyquire('../src/util.js', {
-      '@google-cloud/automl': autoMlMock,
-    });
-
-    util.importData(projectId, computeRegion, datasetId, file);
+    mockData.mocks.imports.throws();
+    mockData.util.importData(projectId, computeRegion, datasetId, file);
   });
 });
 
 describe('listDatasets()', function() {
+  let mockData;
   const projectId = 'test-project';
   const computeRegion = 'us-central1';
 
+  beforeEach(() => {
+    mockData = getMocks();
+  });
+
   it('should return a list of datasets', async function() {
-    const location = sinon.spy();
-    const list = sinon.stub().returns([
+    mockData.mocks.list.returns([
       [
         {
           name: 'projects/12345/locations/us-central1/datasets/12345',
@@ -275,25 +321,15 @@ describe('listDatasets()', function() {
       ],
     ]);
 
-    const mockClient = sinon.stub().returns({
-      locationPath: location,
-      listDatasets: list,
-    });
+    await mockData.util.listDatasets(projectId, computeRegion);
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
-    const util = proxyquire('../src/util.js', {
-      '@google-cloud/automl': autoMlMock,
-    });
-
-    await util.listDatasets(projectId, computeRegion);
-
-    sinon.assert.calledOnce(list);
-    sinon.assert.calledOnce(location);
-    assert(location.calledWith(projectId, computeRegion));
+    sinon.assert.calledOnce(mockData.mocks.list);
+    sinon.assert.calledOnce(mockData.mocks.location);
+    assert(mockData.mocks.location.calledWith(projectId, computeRegion));
   });
+
   it('should throw an error', function() {
-    const location = sinon.spy();
-    const list = sinon.stub().returns([
+    mockData.mocks.list.returns([
       [
         {
           name: 'projects/12345/locations/us-central1/datasets/12345',
@@ -302,27 +338,21 @@ describe('listDatasets()', function() {
       ],
     ]);
 
-    const mockClient = sinon.stub().returns({
-      locationPath: location,
-      listDatasets: list,
-    });
-
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
-    const util = proxyquire('../src/util.js', {
-      '@google-cloud/automl': autoMlMock,
-    });
-
-    util.listDatasets(projectId, computeRegion);
+    mockData.util.listDatasets(projectId, computeRegion);
   });
 });
-// createModel(projectId, computeRegion, datasetId, modelName);
+
 describe('createModel()', function() {
+  let mockData;
   const projectId = 'test-project';
   const computeRegion = 'us-central1';
 
+  beforeEach(() => {
+    mockData = getMocks();
+  });
+
   it('should call AutoML NL API to train model', async function() {
-    const location = sinon.spy();
-    const create = sinon.stub().returns([
+    mockData.mocks.create.returns([
       {Operation: 'data'},
       {
         name:
@@ -336,36 +366,26 @@ describe('createModel()', function() {
       },
     ]);
 
-    const mockClient = sinon.stub().returns({
-      locationPath: location,
-      createModel: create,
-    });
+    await mockData.util.createModel(
+      projectId,
+      computeRegion,
+      '123456ABC',
+      'testModel'
+    );
 
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
-    const util = proxyquire('../src/util.js', {
-      '@google-cloud/automl': autoMlMock,
-    });
-
-    await util.createModel(projectId, computeRegion, '123456ABC', 'testModel');
-
-    sinon.assert.calledOnce(create);
-    sinon.assert.calledOnce(location);
-    assert(location.calledWith(projectId, computeRegion));
+    sinon.assert.calledOnce(mockData.mocks.create);
+    sinon.assert.calledOnce(mockData.mocks.location);
+    assert(mockData.mocks.location.calledWith(projectId, computeRegion));
   });
+
   it('should throw an error', async function() {
-    const location = sinon.spy();
-    const create = sinon.stub().returns([]);
+    mockData.mocks.create.returns([]);
 
-    const mockClient = sinon.stub().returns({
-      locationPath: location,
-      createModel: create,
-    });
-
-    const autoMlMock = {v1beta1: {AutoMlClient: mockClient}};
-    const util = proxyquire('../src/util.js', {
-      '@google-cloud/automl': autoMlMock,
-    });
-
-    await util.createModel(projectId, computeRegion, '123456ABC', 'testModel');
+    await mockData.util.createModel(
+      projectId,
+      computeRegion,
+      '123456ABC',
+      'testModel'
+    );
   });
 });

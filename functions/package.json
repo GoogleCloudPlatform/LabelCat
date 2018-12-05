@@ -1,0 +1,12 @@
+{
+  "name": "labelcat-functions",
+  "engines": {
+    "node": ">= 8.x"
+  },
+  "dependencies": {
+    "@google-cloud/automl": "^0.1.2",
+    "@google-cloud/pubsub": "^0.20.1",
+    "@octokit/rest": "^15.15.1",
+    "loglevel": "^1.6.1"
+  }
+}

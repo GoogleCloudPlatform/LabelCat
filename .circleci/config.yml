@@ -35,6 +35,9 @@ jobs:
           command: |-
             mkdir -p /home/node/.npm-global
             ./.circleci/npm-install-retry.js
+            cd functions
+            ../.circleci/npm-install-retry.js
+            cd ..
           environment:
             NPM_CONFIG_PREFIX: /home/node/.npm-global
       - run:
@@ -59,7 +62,7 @@ jobs:
               done
             fi
       - run: *npm_install_and_link
-      - run: cp defaultsettings.json settings.json
+      - run: cp functions/settings.tmpl.json functions/settings.json
       - run:
           name: Run the tests.
           command: npm test

@@ -1,6 +1,0 @@
-{
-  "githubClientID": "YOUR GITHUB CLIENT ID HERE",
-  "githubClientSecret": "YOUR GITHUB CLIENT SECRET HERE",
-  "projectID": "YOUR GCP PROJECT ID HERE",
-  "computeRegion": "YOUR GCP PROJECT COMPUTE REGION HERE"
-}

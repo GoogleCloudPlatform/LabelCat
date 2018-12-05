@@ -1,25 +1,26 @@
 'use strict';
 
 const fs = require('fs');
-const settings = require('../settings.json'); // eslint-disable-line node/no-missing-require
+const settings = require('../functions/settings.json'); // eslint-disable-line node/no-missing-require
 const octokit = require('@octokit/rest')();
-const log = require('loglevel');
 const Papa = require('papaparse');
+const log = require('loglevel');
 log.setLevel('info');
 const automl = require(`@google-cloud/automl`);
 
 /**
- * Take a filepath to a json object of issues
- * and a filename to save the resulting issue data,
+ * Take a filepath to a json object of issues,
+ * the issue label to train the model on,
+ * and alternative names for the label,
  * then makes api call to GitHub to retrieve current data
  * @param {string} data
- * @param {string} file
+ * @param {string} label
+ * @param {array} alternatives
  */
 async function retrieveIssues(data, label, alternatives) {
   octokit.authenticate({
     type: 'oauth',
-    key: settings.githubClientID,
-    secret: settings.githubClientSecret,
+    token: settings.SECRET_TOKEN,
   });
 
   log.info('RETRIEVING ISSUES...');
@@ -49,11 +50,11 @@ async function retrieveIssues(data, label, alternatives) {
       });
     }
 
-    let opts = [label];
+    let labelList = [label];
     if (alternatives) {
-      opts = opts.concat(alternatives);
+      labelList = labelList.concat(alternatives);
     }
-    issueResults = issueResults.map(issue => cleanLabels(issue, opts));
+    issueResults = issueResults.map(issue => cleanLabels(issue, labelList));
 
     log.info(`ISSUES RETRIEVED: ${issueResults.length}`);
     return issueResults;
@@ -65,6 +66,13 @@ async function retrieveIssues(data, label, alternatives) {
   }
 }
 
+/**
+ * handles pagination for GitHub API call
+ *
+ * @param {object} method
+ * @param {string} repo
+ * @param {string} owner
+ */
 async function paginate(method, repo, owner) {
   let response = await method({
     owner: owner,
@@ -85,12 +93,12 @@ async function paginate(method, repo, owner) {
 /**
  * determines whether label is present on issue
  *
- * @param {array} issues
- * @param {string} label
+ * @param {object} issue
+ * @param {array} labelList
  */
-function cleanLabels(issue, opts) {
+function cleanLabels(issue, labelList) {
   let info;
-  if (issue.labels.some(r => opts.includes(r))) {
+  if (issue.labels.some(label => labelList.includes(label))) {
     info = {text: issue.text, label: 1};
   } else {
     info = {text: issue.text, label: 0};
@@ -106,7 +114,10 @@ function cleanLabels(issue, opts) {
  */
 function getIssueInfo(issue) {
   try {
-    const text = issue.title + ' ' + issue.body;
+    const raw = `${issue.title} ${issue.body}`;
+
+    // remove punctuation that will interfere with csv
+    const text = raw.replace(/[^\w\s]/gi, '');
     const labels = issue.labels.map(labelObject => labelObject.name);
 
     return {text, labels};
@@ -149,13 +160,13 @@ async function createDataset(
   const client = new automl.v1beta1.AutoMlClient();
   const projectLocation = client.locationPath(projectId, computeRegion);
 
-  // Classification type is assigned based on multiClass value.
+  // Classification type is assigned based on multiClass value
   let classificationType = `MULTICLASS`;
   if (multiLabel) {
     classificationType = `MULTILABEL`;
   }
 
-  // Set dataset name and metadata.
+  // Set dataset name and metadata
   const myDataset = {
     displayName: datasetName,
     textClassificationDatasetMetadata: {
@@ -190,7 +201,7 @@ async function createDataset(
 }
 
 /**
- * Import data into Google AutoML NL dataset
+ * Import data into Google AutoML Natural Language dataset
  * @param {string} projectId
  * @param {string} computeRegion
  * @param {string} datasetId
@@ -222,6 +233,11 @@ async function importData(projectId, computeRegion, datasetId, path) {
   }
 }
 
+/**
+ * List AutoML Natural Language datasets for current GCP project
+ * @param {string} projectId
+ * @param {string} computeRegion
+ */
 async function listDatasets(projectId, computeRegion) {
   const client = new automl.v1beta1.AutoMlClient();
   const projectLocation = client.locationPath(projectId, computeRegion);
@@ -247,6 +263,13 @@ async function listDatasets(projectId, computeRegion) {
   }
 }
 
+/**
+ * Create Google AutoML Natural Language model
+ * @param {string} projectId
+ * @param {string} computeRegion
+ * @param {string} datasetId
+ * @param {string} modelName
+ */
 async function createModel(projectId, computeRegion, datasetId, modelName) {
   const client = new automl.v1beta1.AutoMlClient();
 
